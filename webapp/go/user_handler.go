@@ -206,12 +206,15 @@ func getUserHandler(c echo.Context) error {
 	team := Team{}
 
 	err = tx.GetContext(c.Request().Context(), &team, "SELECT * FROM teams JOIN users ON leader_id = users.id OR member1_id = users.id OR member2_id = users.id WHERE users.name = ?", username)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		// 空文字列を返せばフロントエンドがいい感じに処理してくれる
+		res.Teamname = ""
+		res.Teamdisplayname = ""
+	} else if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get team info: "+err.Error())
+	} else {
+		res.Teamname = team.Name
+		res.DisplayName = team.DisplayName
 	}
-
-	res.Teamname = team.Name
-	res.DisplayName = team.DisplayName
-
 	return c.JSON(http.StatusOK, res)
 }
