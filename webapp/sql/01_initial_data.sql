@@ -34,7 +34,7 @@ INSERT INTO `answers` (`id`, `question_id`, `answer`, `score`) VALUES
     (2, 2, '3', 10),
     (3, 3, '0', 10),
     (4, 4, '-1', 10),
-    (4, 4, '1', 5);
+    (5, 4, '1', 5);
 
 TRUNCATE TABLE `submissions`;
 ALTER TABLE `submissions` AUTO_INCREMENT = 1;
