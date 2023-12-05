@@ -205,7 +205,7 @@ func getUserHandler(c echo.Context) error {
 
 	team := Team{}
 
-	err = tx.GetContext(c.Request().Context(), &team, "SELECT * FROM teams JOIN users ON leader_id = users.id OR member1_id = users.id OR member2_id = users.id WHERE users.name = ?", username)
+	err = tx.GetContext(c.Request().Context(), &team, "SELECT teams.* FROM teams JOIN users ON leader_id = users.id OR member1_id = users.id OR member2_id = users.id WHERE users.name = ?", username)
 	if err == sql.ErrNoRows {
 		// 空文字列を返せばフロントエンドがいい感じに処理してくれる
 		res.Teamname = ""
