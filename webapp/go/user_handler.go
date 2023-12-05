@@ -29,8 +29,8 @@ type Team struct {
 	Name           string `db:"name"`
 	DisplayName    string `db:"display_name"`
 	LeaderID       int    `db:"leader_id"`
-	Member1ID      int    `db:"member1_id"`
-	Member2ID      int    `db:"member2_id"`
+	Member1ID      *int    `db:"member1_id"`
+	Member2ID      *int    `db:"member2_id"`
 	Description    string `db:"description"`
 	InvitationCode string `db:"invitation_code"`
 }
@@ -214,7 +214,7 @@ func getUserHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get team info: "+err.Error())
 	} else {
 		res.Teamname = team.Name
-		res.DisplayName = team.DisplayName
+		res.Teamdisplayname = team.DisplayName
 	}
 	return c.JSON(http.StatusOK, res)
 }
