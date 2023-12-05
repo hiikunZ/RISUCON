@@ -56,6 +56,6 @@ CREATE TABLE `submissions` (
     `question_id` INT NOT NULL,
     `user_id` INT NOT NULL,
     `submitted_at` DATETIME NOT NULL,
-    `answer` VARCHAR(255) NOT NULL,
+    `answer` VARCHAR(255) NOT NULL
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
 
