@@ -2,10 +2,10 @@ TRUNCATE TABLE `users`;
 ALTER TABLE `users` AUTO_INCREMENT = 1;
 INSERT INTO `users` (`id`, `name`, `display_name`, `description`, `passhash`) VALUES
     (1, 'admin', '管理者', 'admin です', '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918'),
-    (2, 'isucon1', 'isucon1', 'テスト用ユーザー1', 'b88d6a9f342ee06400fa2b16664184b83cbd3406a6bba22d919c8f48a4af2cd3'),
-    (3, 'isucon2', 'isucon2', 'テスト用ユーザー2', '35359832f0a86c2e80cc583177a299f6aefc1c8d71e81daf88d3f6bc993e3339'),
-    (4, 'isucon3', 'isucon3', 'テスト用ユーザー3', 'eb4143a58bbec1fb0aed79bc9235558a559bd7cba13744809d9f6923f6492c96'),
-    (5, 'isucon4', 'isucon4', 'テスト用ユーザー4', '087520a867907817d76563bcd7626f2c21ca72b7808f9cf684c3c99c88fc541d');
+    (2, 'risucon1', 'risucon1', 'テスト用ユーザー1', '0778c5cb31e8c87408ced3bf15467f371c9da0810b856a18ccb1ba00cda7b4d2'),
+    (3, 'risucon2', 'risucon2', 'テスト用ユーザー2', 'c9fbc16ab8be26f057448c2eaaf9c5105b737374b06becd2c6817cf978f97020'),
+    (4, 'risucon3', 'risucon3', 'テスト用ユーザー3', '0a414dbc7b463040ab92cb820bb89884b1dbe3ae974d5ed5ebf4246b79d0f0fb'),
+    (5, 'risucon4', 'risucon4', 'テスト用ユーザー4', '9a2f790ffe815adebec3f30a849b26a7262c81abe72ba683064c66bd331c976b');
 
 TRUNCATE TABLE `teams`;
 ALTER TABLE `teams` AUTO_INCREMENT = 1;
