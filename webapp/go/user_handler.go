@@ -74,7 +74,7 @@ func registerHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user: "+err.Error())
 	}
 
-	pashhash := sha256.Sum256([]byte(req.Password))
+	pashhash := fmt.Sprintf("%x", sha256.Sum256([]byte(req.Password)))
 
 	if _, err = tx.ExecContext(ctx, "INSERT INTO users (name, display_name, description, passhash) VALUES (?, ?, ?, ?)", req.Name, req.DisplayName, req.Description, pashhash); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert user: "+err.Error())
