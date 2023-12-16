@@ -19,9 +19,9 @@ INSERT INTO `tasks` (`id`, `name`, `display_name`, `statement`) VALUES
     (1, 'A', '足し算', '足し算をしてください。'),
     (2, 'B', '引き算', '引き算をしてください。');
 
-TRUNCATE TABLE `questions`;
-ALTER TABLE `questions` AUTO_INCREMENT = 1;
-INSERT INTO `questions` (`id`, `name`, `display_name`, `task_id`, `statement`) VALUES
+TRUNCATE TABLE `subtasks`;
+ALTER TABLE `subtasks` AUTO_INCREMENT = 1;
+INSERT INTO `subtasks` (`id`, `name`, `display_name`, `task_id`, `statement`) VALUES
     (1, 'A_1', '(1)', 1, '1+1=?'),
     (2, 'A_2', '(2)', 1, '1+2=?'),
     (3, 'B_1', '(1)', 2, '1-1=?'),
@@ -29,12 +29,12 @@ INSERT INTO `questions` (`id`, `name`, `display_name`, `task_id`, `statement`) V
 
 TRUNCATE TABLE `answers`;
 ALTER TABLE `answers` AUTO_INCREMENT = 1;
-INSERT INTO `answers` (`id`, `question_id`, `answer`, `score`) VALUES
-    (1, 1, '2', 10),
-    (2, 2, '3', 10),
-    (3, 3, '0', 10),
-    (4, 4, '-1', 10),
-    (5, 4, '1', 5);
+INSERT INTO `answers` (`id`, `task_id`, `question_id`, `answer`, `score`) VALUES
+    (1, 1, 1, '2', 10),
+    (2, 1, 2, '3', 10),
+    (3, 2, 3, '0', 10),
+    (4, 2, 4, '-1', 10),
+    (5, 2, 4, '1', 5);
 
 TRUNCATE TABLE `submissions`;
 ALTER TABLE `submissions` AUTO_INCREMENT = 1;

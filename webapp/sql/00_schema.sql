@@ -30,8 +30,8 @@ CREATE TABLE `tasks` (
     UNIQUE `uniq_task_name` (`name`)
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
 
-DROP TABLE IF EXISTS `questions`;
-CREATE TABLE `questions` (
+DROP TABLE IF EXISTS `subtasks`;
+CREATE TABLE `subtasks` (
     `id` INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
     `name` VARCHAR(255) NOT NULL,
     `display_name` VARCHAR(255) NOT NULL,
@@ -43,10 +43,11 @@ CREATE TABLE `questions` (
 DROP TABLE IF EXISTS `answers`;
 CREATE TABLE `answers` (
     `id` INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    `question_id` INT NOT NULL,
+    `task_id` INT NOT NULL,
+    `subtask_id` INT NOT NULL,
     `answer` VARCHAR(255) NOT NULL,
     `score` INT NOT NULL,
-    UNIQUE `uniq_answer` (`question_id`, `answer`)
+    UNIQUE `uniq_answer` (`task_id`, `answer`)
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
 
 DROP TABLE IF EXISTS `submissions`;

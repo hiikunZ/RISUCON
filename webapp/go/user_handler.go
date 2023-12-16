@@ -168,8 +168,8 @@ type UserResponse struct {
 	DisplayName     string `json:"display_name"`
 	Description     string `json:"description"`
 	SubmissionCount int    `json:"submission_count"`
-	Teamname        string `json:"teamname"`
-	Teamdisplayname string `json:"teamdisplayname"`
+	TeamName        string `json:"team_name"`
+	TeamDisplayName string `json:"team_display_name"`
 }
 
 // GET /api/user/:username
@@ -208,13 +208,18 @@ func getUserHandler(c echo.Context) error {
 	err = tx.GetContext(c.Request().Context(), &team, "SELECT teams.* FROM teams JOIN users ON leader_id = users.id OR member1_id = users.id OR member2_id = users.id WHERE users.name = ?", username)
 	if err == sql.ErrNoRows {
 		// 空文字列を返せばフロントエンドがいい感じに処理してくれる
-		res.Teamname = ""
-		res.Teamdisplayname = ""
+		res.TeamName = ""
+		res.TeamDisplayName = ""
 	} else if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get team info: "+err.Error())
 	} else {
-		res.Teamname = team.Name
-		res.Teamdisplayname = team.DisplayName
+		res.TeamName = team.Name
+		res.TeamDisplayName = team.DisplayName
 	}
+
+	if err = tx.Commit(); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit transaction: "+err.Error())
+	}
+
 	return c.JSON(http.StatusOK, res)
 }
