@@ -141,8 +141,8 @@ func getstandings(ctx context.Context, tx *sqlx.Tx) (Standings, error) {
 			if err := tx.GetContext(ctx, &member2, "SELECT * FROM users WHERE id = ?", team.Member1ID); err != nil {
 				return Standings{}, err
 			}
-			teamstandings.Member1Name = member2.Name
-			teamstandings.Member1DisplayName = member2.DisplayName
+			teamstandings.Member2Name = member2.Name
+			teamstandings.Member2DisplayName = member2.DisplayName
 		}
 
 		scoringdata := []TeamsStandingsSub{}
