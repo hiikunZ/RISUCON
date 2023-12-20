@@ -179,7 +179,7 @@ func getstandings(ctx context.Context, tx *sqlx.Tx) (Standings, error) {
 					taskscoringdata.HasSubmitted = true
 				}
 			}
-			
+
 			for _, subtask := range subtasks {
 				subtaskscore := 0
 
@@ -187,21 +187,27 @@ func getstandings(ctx context.Context, tx *sqlx.Tx) (Standings, error) {
 				if err := tx.GetContext(ctx, &leaderscore, "SELECT MAX(score) FROM answers WHERE subtask_id = ? AND EXISTS (SELECT * FROM submissions WHERE task_id = ? AND user_id = ? AND submissions.answer = answers.answer)", subtask.ID, task.ID, team.LeaderID); err != nil {
 					return Standings{}, err
 				}
-				subtaskscore = max(subtaskscore, leaderscore)
+				if subtaskscore < leaderscore {
+					subtaskscore = leaderscore
+				}
 
 				if team.Member1ID != nil {
 					member1score := 0
 					if err := tx.GetContext(ctx, &member1score, "SELECT MAX(score) FROM answers WHERE subtask_id = ? AND EXISTS (SELECT * FROM submissions WHERE task_id = ? AND user_id = ? AND submissions.answer = answers.answer)", subtask.ID, task.ID, team.Member1ID); err != nil {
 						return Standings{}, err
 					}
-					subtaskscore = max(subtaskscore, member1score)
+					if subtaskscore < member1score {
+						subtaskscore = member1score
+					}
 				}
 				if team.Member2ID != nil {
 					member2score := 0
 					if err := tx.GetContext(ctx, &member2score, "SELECT MAX(score) FROM answers WHERE subtask_id = ? AND EXISTS (SELECT * FROM submissions WHERE task_id = ? AND user_id = ? AND submissions.answer = answers.answer)", subtask.ID, task.ID, team.Member2ID); err != nil {
 						return Standings{}, err
 					}
-					subtaskscore = max(subtaskscore, member2score)
+					if subtaskscore < member2score {
+						subtaskscore = member2score
+					}
 				}
 				taskscoringdata.Score += subtaskscore
 			}
