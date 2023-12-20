@@ -58,7 +58,8 @@ func createTeamHandler(c echo.Context) error {
 
 	req.InvitationCode = generateInvitationCode()
 
-	username := c.Get(defaultSessionUserNameKey).(string)
+	sess, _ := session.Get(defaultSessionIDKey, c)
+	username, _ := sess.Values[defaultSessionUserNameKey].(string)
 
 	tx, err := dbConn.BeginTxx(ctx, nil)
 	if err != nil {
