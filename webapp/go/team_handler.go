@@ -10,16 +10,27 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+type Team struct {
+	ID             int    `db:"id"`
+	Name           string `db:"name"`
+	DisplayName    string `db:"display_name"`
+	LeaderID       int    `db:"leader_id"`
+	Member1ID      *int   `db:"member1_id"`
+	Member2ID      *int   `db:"member2_id"`
+	Description    string `db:"description"`
+	InvitationCode string `db:"invitation_code"`
+}
+
 type CreateTeamRequest struct {
-	Name			string `json:"name"`
-	DisplayName		string `json:"display_name"`
-	leader_id		int	   
-	Description		string `json:"description"`
-	InvitationCode	string 
+	Name           string `json:"name"`
+	DisplayName    string `json:"display_name"`
+	leader_id      int
+	Description    string `json:"description"`
+	InvitationCode string
 }
 
 func generateInvitationCode() string {
-	out, err := exec.Command("/bin/bash","-c","openssl rand -hex 8").Output()
+	out, err := exec.Command("/bin/bash", "-c", "openssl rand -hex 8").Output()
 	if err != nil {
 		return ""
 	}
@@ -73,7 +84,7 @@ func createTeamHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get team: "+err.Error())
 	}
 
-	if _,err = tx.ExecContext(ctx, "INSERT INTO teams (name, display_name, leader_id, description, invitation_code) VALUES (?, ?, ?, ?, ?)", req.Name, req.DisplayName, req.leader_id, req.Description, req.InvitationCode); err != nil {
+	if _, err = tx.ExecContext(ctx, "INSERT INTO teams (name, display_name, leader_id, description, invitation_code) VALUES (?, ?, ?, ?, ?)", req.Name, req.DisplayName, req.leader_id, req.Description, req.InvitationCode); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert team: "+err.Error())
 	}
 
@@ -85,8 +96,8 @@ func createTeamHandler(c echo.Context) error {
 }
 
 type JoinTeamRequest struct {
-	TeamName		string `json:"team_name"`
-	InvitationCode	string `json:"invitation_code"`
+	TeamName       string `json:"team_name"`
+	InvitationCode string `json:"invitation_code"`
 }
 
 // POST /api/team/join
@@ -153,13 +164,13 @@ func joinTeamHandler(c echo.Context) error {
 }
 
 type TeamResponse struct {
-	Name			string `json:"name"`
-	DisplayName		string `json:"display_name"`
-	Leader			string `json:"leader"`
-	Member1			string `json:"member1"`
-	Member2			string `json:"member2"`
-	Description		string `json:"description"`
-	InvitationCode	string `json:"invitation_code"`
+	Name           string `json:"name"`
+	DisplayName    string `json:"display_name"`
+	Leader         string `json:"leader"`
+	Member1        string `json:"member1"`
+	Member2        string `json:"member2"`
+	Description    string `json:"description"`
+	InvitationCode string `json:"invitation_code"`
 }
 
 // GET /api/team/:teamname
@@ -175,7 +186,7 @@ func getTeamHandler(c echo.Context) error {
 	team := Team{}
 
 	err = tx.GetContext(c.Request().Context(), &team, "SELECT * FROM teams WHERE name = ?", teamname)
-	
+
 	if err == sql.ErrNoRows {
 		return echo.NewHTTPError(http.StatusBadRequest, "team not found")
 	} else if err != nil {
@@ -183,9 +194,9 @@ func getTeamHandler(c echo.Context) error {
 	}
 
 	res := TeamResponse{
-		Name:			team.Name,
-		DisplayName:	team.DisplayName,
-		Description:	team.Description,
+		Name:        team.Name,
+		DisplayName: team.DisplayName,
+		Description: team.Description,
 	}
 
 	leader := User{}
@@ -213,7 +224,7 @@ func getTeamHandler(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get member2: "+err.Error())
 		}
 		res.Member2 = member2.Name
-	} else{
+	} else {
 		res.Member2 = ""
 	}
 

@@ -24,17 +24,6 @@ type User struct {
 	Passhash    string `db:"passhash"`
 }
 
-type Team struct {
-	ID             int    `db:"id"`
-	Name           string `db:"name"`
-	DisplayName    string `db:"display_name"`
-	LeaderID       int    `db:"leader_id"`
-	Member1ID      *int    `db:"member1_id"`
-	Member2ID      *int    `db:"member2_id"`
-	Description    string `db:"description"`
-	InvitationCode string `db:"invitation_code"`
-}
-
 type RegisterRequest struct {
 	Name        string `json:"name"`
 	DisplayName string `json:"display_name"`
