@@ -102,6 +102,9 @@ func main() {
 	// e.POST("/api/submit", submitHandler)
 	// e.GET("/api/submissions", getSubmissionsHandler)
 
+	// for admin
+	// e.POST("/api/admin/createtask", createTaskHandler)
+
 	// DB接続
 	db, err := connectDB()
 	if err != nil {
