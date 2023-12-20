@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
@@ -20,6 +22,13 @@ type Subtask struct {
 	DisplayName string `db:"display_name"`
 	TaskID      int    `db:"task_id"`
 	Statement   string `db:"statement"`
+}
+type Answer struct {
+	ID        int    `db:"id"`
+	TaskID    int    `db:"task_id"`
+	SubtaskID int    `db:"subtask_id"`
+	Answer    string `db:"answer"`
+	Score     int    `db:"score"`
 }
 
 type TaskAbstract struct {
@@ -125,7 +134,7 @@ func getstandings(ctx context.Context, tx *sqlx.Tx) (Standings, error) {
 		teamstandings.TeamName = team.Name
 		teamstandings.TeamDisplayName = team.DisplayName
 		teamstandings.TotalScore = 0
-		
+
 		leader := User{}
 		if err := tx.GetContext(ctx, &leader, "SELECT * FROM users WHERE id = ?", team.LeaderID); err != nil {
 			return Standings{}, err
@@ -259,4 +268,157 @@ func getStandingsHandler(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, standings)
+}
+
+type SubtaskDetail struct {
+	Name        string `json:"name"`
+	DisplayName string `json:"display_name"`
+	Statement   string `json:"statement"`
+	Score       int    `json:"score"`
+}
+type TaskDetail struct {
+	Name        string          `json:"name"`
+	DisplayName string          `json:"display_name"`
+	Statement   string          `json:"statement"`
+	Score       int             `json:"score"`
+	Subtasks    []SubtaskDetail `json:"subtasks"`
+}
+
+// GET /api/tasks/:taskname
+func getTaskHandler(c echo.Context) error {
+	taskname := c.Param("taskname")
+
+	tx, err := dbConn.BeginTxx(c.Request().Context(), nil)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to begin transaction: "+err.Error())
+	}
+	defer tx.Rollback()
+
+	task := Task{}
+
+	err = tx.GetContext(c.Request().Context(), &task, "SELECT * FROM tasks WHERE name = ?", taskname)
+
+	if err == sql.ErrNoRows {
+		return echo.NewHTTPError(http.StatusBadRequest, "task not found")
+	} else if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get task: "+err.Error())
+	}
+
+	subtasks := []Subtask{}
+	if err := tx.SelectContext(c.Request().Context(), &subtasks, "SELECT * FROM subtasks WHERE task_id = ?", task.ID); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get subtasks: "+err.Error())
+	}
+
+	res := TaskDetail{
+		Name:        task.Name,
+		DisplayName: task.DisplayName,
+		Statement:   task.Statement,
+		Score:       0,
+	}
+
+	for _, subtask := range subtasks {
+		subtaskdetail := SubtaskDetail{
+			Name:        subtask.Name,
+			DisplayName: subtask.DisplayName,
+			Statement:   subtask.Statement,
+		}
+		if err := tx.GetContext(c.Request().Context(), &subtaskdetail.Score, "SELECT MAX(score) FROM answers WHERE subtask_id = ?", subtask.ID); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get subtask score: "+err.Error())
+		}
+		res.Subtasks = append(res.Subtasks, subtaskdetail)
+		res.Score += subtaskdetail.Score
+	}
+	return c.JSON(http.StatusOK, res)
+}
+
+type SubmitRequest struct {
+	TaskName  string `json:"task_name"`
+	Answer    string `json:"answer"`
+	Timestamp int64  `json:"timestamp"`
+}
+
+type SubmitResponse struct {
+	IsScored           bool   `json:"is_scored"`
+	Score              int    `json:"score"`
+	SubtaskName        string `json:"subtask_name"`
+	SubTaskDisplayName string `json:"subtask_display_name"`
+}
+
+// POST /api/submit
+func submitHandler(c echo.Context) error {
+	ctx := c.Request().Context()
+	defer c.Request().Body.Close()
+
+	if err := verifyUserSession(c); err != nil {
+		return err
+	}
+
+	username := c.Get("username").(string)
+
+	tx, err := dbConn.BeginTxx(c.Request().Context(), nil)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to begin transaction: "+err.Error())
+	}
+	defer tx.Rollback()
+
+	user := User{}
+	if err := tx.GetContext(c.Request().Context(), &user, "SELECT * FROM users WHERE name = ?", username); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user: "+err.Error())
+	}
+
+	team := Team{}
+	err = tx.GetContext(c.Request().Context(), &team, "SELECT * FROM teams WHERE leader_id = ? OR member1_id = ? OR member2_id = ?", username, username, username)
+	if err == sql.ErrNoRows {
+		return echo.NewHTTPError(http.StatusBadRequest, "you have not joined team")
+	} else if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get team: "+err.Error())
+	}
+
+	req := SubmitRequest{}
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "failed to bind request: "+err.Error())
+	}
+
+	task := Task{}
+	err = tx.GetContext(c.Request().Context(), &task, "SELECT * FROM tasks WHERE name = ?", req.TaskName)
+	if err == sql.ErrNoRows {
+		return echo.NewHTTPError(http.StatusBadRequest, "task not found")
+	} else if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get task: "+err.Error())
+	}
+
+	timestamp := time.Unix(req.Timestamp, 0)
+
+	if _, err = tx.ExecContext(ctx, "INSERT INTO submissions (task_id, user_id, submitted_at, answer) VALUES (?, ?, ?, ?)", task.ID, user.ID, timestamp, req.Answer); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert submission: "+err.Error())
+	}
+
+	res := SubmitResponse{}
+
+	answer := Answer{}
+	err = tx.GetContext(c.Request().Context(), &answer, "SELECT * FROM answers WHERE task_id = ? AND answer = ?", task.ID, req.Answer)
+	if err == sql.ErrNoRows {
+		res.IsScored = false
+		res.Score = 0
+		res.SubtaskName = ""
+		res.SubTaskDisplayName = ""
+	} else if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get answer: "+err.Error())
+	} else {
+		res.IsScored = true
+		res.Score = answer.Score
+		subtask := Subtask{}
+		if err := tx.GetContext(c.Request().Context(), &subtask, "SELECT * FROM subtasks WHERE id = ?", answer.SubtaskID); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get subtask: "+err.Error())
+		}
+		res.SubtaskName = subtask.Name
+		res.SubTaskDisplayName = subtask.DisplayName
+	}
+
+	return c.JSON(http.StatusOK, res)
+}
+
+// GET /api/submissions
+func getSubmissionsHandler(c echo.Context) error {
+	return c.NoContent(http.StatusOK)
 }
