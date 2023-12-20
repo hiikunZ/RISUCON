@@ -29,7 +29,7 @@ INSERT INTO `subtasks` (`id`, `name`, `display_name`, `task_id`, `statement`) VA
 
 TRUNCATE TABLE `answers`;
 ALTER TABLE `answers` AUTO_INCREMENT = 1;
-INSERT INTO `answers` (`id`, `task_id`, `question_id`, `answer`, `score`) VALUES
+INSERT INTO `answers` (`id`, `task_id`, `subtask_id`, `answer`, `score`) VALUES
     (1, 1, 1, '2', 10),
     (2, 1, 2, '3', 10),
     (3, 2, 3, '0', 10),
