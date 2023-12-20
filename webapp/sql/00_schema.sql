@@ -53,7 +53,7 @@ CREATE TABLE `answers` (
 DROP TABLE IF EXISTS `submissions`;
 CREATE TABLE `submissions` (
     `id` INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    `question_id` INT NOT NULL,
+    `task_id` INT NOT NULL,
     `user_id` INT NOT NULL,
     `submitted_at` DATETIME NOT NULL,
     `answer` VARCHAR(255) NOT NULL

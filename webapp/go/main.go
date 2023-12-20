@@ -96,8 +96,8 @@ func main() {
 	e.GET("/api/team/:teamname", getTeamHandler)
 
 	// contest
-	// e.GET("/api/tasks", getTasksHandler)
-	// e.GET("/api/standings", getStandingsHandler)
+	e.GET("/api/tasks", getTasksHandler)
+	e.GET("/api/standings", getStandingsHandler)
 	// e.GET("/api/tasks/:taskname", getTaskHandler)
 	// e.POST("/api/submit", submitHandler)
 	// e.GET("/api/submissions", getSubmissionsHandler)
