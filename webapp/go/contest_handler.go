@@ -216,6 +216,21 @@ func getstandings(ctx context.Context, tx *sqlx.Tx) (Standings, error) {
 		teamstandings.ScoringData = scoringdata
 		standings.StandingsData = append(standings.StandingsData, teamstandings)
 	}
+	
+	// sort
+	for i := 0; i < len(standings.StandingsData); i++ {
+		for j := i + 1; j < len(standings.StandingsData); j++ {
+			if standings.StandingsData[i].TotalScore < standings.StandingsData[j].TotalScore {
+				tmp := standings.StandingsData[i]
+				standings.StandingsData[i] = standings.StandingsData[j]
+				standings.StandingsData[j] = tmp
+			}
+		}
+	}
+	for i := 0; i < len(standings.StandingsData); i++ {
+		standings.StandingsData[i].Rank = i + 1
+	}
+
 	return standings, nil
 }
 
