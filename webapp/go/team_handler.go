@@ -42,6 +42,10 @@ func createTeamHandler(c echo.Context) error {
 	ctx := c.Request().Context()
 	defer c.Request().Body.Close()
 
+	if err := verifyUserSession(c); err != nil {
+		return err
+	}
+
 	req := CreateTeamRequest{}
 
 	if err := c.Bind(&req); err != nil {
@@ -54,14 +58,7 @@ func createTeamHandler(c echo.Context) error {
 
 	req.InvitationCode = generateInvitationCode()
 
-	sess, err := session.Get(defaultSessionIDKey, c)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get session: "+err.Error())
-	}
-	username, ok := sess.Values[defaultSessionUserNameKey].(string)
-	if !ok {
-		return echo.NewHTTPError(http.StatusUnauthorized, "not logged in")
-	}
+	username := c.Get(defaultSessionUserNameKey).(string)
 
 	tx, err := dbConn.BeginTxx(ctx, nil)
 	if err != nil {
@@ -77,9 +74,17 @@ func createTeamHandler(c echo.Context) error {
 	req.leader_id = usr.ID
 
 	team := Team{}
+
 	err = tx.GetContext(ctx, &team, "SELECT * FROM teams WHERE name = ?", req.Name)
 	if err == nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "team name already exists")
+		return echo.NewHTTPError(http.StatusBadRequest, "team already exists")
+	} else if err != sql.ErrNoRows {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get team: "+err.Error())
+	}
+
+	err = tx.GetContext(ctx, &team, "SELECT * FROM teams WHERE leader_id = ? OR member1_id = ? OR  member2_id = ?", usr.ID, usr.ID, usr.ID)
+	if err == nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "you have already joined team")
 	} else if err != sql.ErrNoRows {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get team: "+err.Error())
 	}
@@ -164,13 +169,16 @@ func joinTeamHandler(c echo.Context) error {
 }
 
 type TeamResponse struct {
-	Name           string `json:"name"`
-	DisplayName    string `json:"display_name"`
-	Leader         string `json:"leader"`
-	Member1        string `json:"member1"`
-	Member2        string `json:"member2"`
-	Description    string `json:"description"`
-	InvitationCode string `json:"invitation_code"`
+	Name               string `json:"name"`
+	DisplayName        string `json:"display_name"`
+	LeaderName         string `json:"leader_name"`
+	LeaderDisplayName  string `json:"leader_display_name"`
+	Member1Name        string `json:"member1_name"`
+	Member1DisplayName string `json:"member1_display_name"`
+	Member2Name        string `json:"member2_name"`
+	Member2DisplayName string `json:"member2_display_name"`
+	Description        string `json:"description"`
+	InvitationCode     string `json:"invitation_code"`
 }
 
 // GET /api/team/:teamname
@@ -204,7 +212,8 @@ func getTeamHandler(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get leader: "+err.Error())
 	}
-	res.Leader = leader.Name
+	res.LeaderName = leader.Name
+	res.LeaderDisplayName = leader.DisplayName
 
 	if team.Member1ID != nil {
 		member1 := User{}
@@ -212,9 +221,11 @@ func getTeamHandler(c echo.Context) error {
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get member1: "+err.Error())
 		}
-		res.Member1 = member1.Name
+		res.Member1Name = member1.Name
+		res.Member1DisplayName = member1.DisplayName
 	} else {
-		res.Member1 = ""
+		res.Member1Name = ""
+		res.Member1DisplayName = ""
 	}
 
 	if team.Member2ID != nil {
@@ -223,9 +234,11 @@ func getTeamHandler(c echo.Context) error {
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get member2: "+err.Error())
 		}
-		res.Member2 = member2.Name
+		res.Member2Name = member2.Name
+		res.Member2DisplayName = member2.DisplayName
 	} else {
-		res.Member2 = ""
+		res.Member2Name = ""
+		res.Member2DisplayName = ""
 	}
 
 	sess, err := session.Get(defaultSessionIDKey, c)
@@ -233,7 +246,7 @@ func getTeamHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get session: "+err.Error())
 	}
 	username, ok := sess.Values[defaultSessionUserNameKey].(string)
-	if !ok || username != res.Leader {
+	if !ok || username != res.LeaderName {
 		res.InvitationCode = ""
 	} else {
 		res.InvitationCode = team.InvitationCode

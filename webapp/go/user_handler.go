@@ -31,6 +31,17 @@ type RegisterRequest struct {
 	Password    string `json:"password"` // ハッシュ化されていない
 }
 
+func verifyUserSession(c echo.Context) error {
+	sess, err := session.Get(defaultSessionIDKey, c)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get session")
+	}
+	if sess.Values[defaultSessionUserNameKey] == nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, "not logged in")
+	}
+	return nil
+}
+
 // POST /api/register
 func registerHandler(c echo.Context) error {
 	ctx := c.Request().Context()
