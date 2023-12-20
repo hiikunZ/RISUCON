@@ -122,6 +122,10 @@ func getstandings(ctx context.Context, tx *sqlx.Tx) (Standings, error) {
 	}
 	for _, team := range teams {
 		teamstandings := TeamsStandings{}
+		teamstandings.TeamName = team.Name
+		teamstandings.TeamDisplayName = team.DisplayName
+		teamstandings.TotalScore = 0
+		
 		leader := User{}
 		if err := tx.GetContext(ctx, &leader, "SELECT * FROM users WHERE id = ?", team.LeaderID); err != nil {
 			return Standings{}, err
@@ -212,11 +216,12 @@ func getstandings(ctx context.Context, tx *sqlx.Tx) (Standings, error) {
 				taskscoringdata.Score += subtaskscore
 			}
 			scoringdata = append(scoringdata, taskscoringdata)
+			teamstandings.TotalScore += taskscoringdata.Score
 		}
 		teamstandings.ScoringData = scoringdata
 		standings.StandingsData = append(standings.StandingsData, teamstandings)
 	}
-	
+
 	// sort
 	for i := 0; i < len(standings.StandingsData); i++ {
 		for j := i + 1; j < len(standings.StandingsData); j++ {
