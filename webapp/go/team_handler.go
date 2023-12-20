@@ -111,6 +111,10 @@ func joinTeamHandler(c echo.Context) error {
 	ctx := c.Request().Context()
 	defer c.Request().Body.Close()
 
+	if err := verifyUserSession(c); err != nil {
+		return err
+	}
+
 	req := JoinTeamRequest{}
 
 	if err := c.Bind(&req); err != nil {
@@ -135,19 +139,20 @@ func joinTeamHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid invitation code")
 	}
 
-	sess, err := session.Get(defaultSessionIDKey, c)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get session: "+err.Error())
-	}
-	username, ok := sess.Values[defaultSessionUserNameKey].(string)
-	if !ok {
-		return echo.NewHTTPError(http.StatusUnauthorized, "not logged in")
-	}
+	sess, _ := session.Get(defaultSessionIDKey, c)
+	username, _ := sess.Values[defaultSessionUserNameKey].(string)
 
 	usr := User{}
 	err = tx.GetContext(ctx, &usr, "SELECT * FROM users WHERE name = ?", username)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user: "+err.Error())
+	}
+
+	err = tx.GetContext(ctx, &team, "SELECT * FROM teams WHERE leader_id = ? OR member1_id = ? OR  member2_id = ?", usr.ID, usr.ID, usr.ID)
+	if err == nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "you have already joined team")
+	} else if err != sql.ErrNoRows {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get team: "+err.Error())
 	}
 
 	if team.Member1ID == nil {
