@@ -38,7 +38,7 @@ INSERT INTO `answers` (`id`, `task_id`, `subtask_id`, `answer`, `score`) VALUES
 
 TRUNCATE TABLE `submissions`;
 ALTER TABLE `submissions` AUTO_INCREMENT = 1;
-INSERT INTO `submissions` (`id`, `question_id`, `user_id`, `submitted_at`, `answer`) VALUES
+INSERT INTO `submissions` (`id`, `task_id`, `user_id`, `submitted_at`, `answer`) VALUES
     (1, 1, 2, '2012-06-20 00:00:00', '2'),
     (2, 2, 3, '2012-06-20 00:00:01', '3'),
     (3, 3, 4, '2012-06-20 00:00:02', '0'),
