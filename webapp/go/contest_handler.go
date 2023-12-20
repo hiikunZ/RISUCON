@@ -184,7 +184,7 @@ func getstandings(ctx context.Context, tx *sqlx.Tx) (Standings, error) {
 				subtaskscore := 0
 
 				leaderscore := 0
-				if err := tx.GetContext(ctx, &leaderscore, "SELECT MAX(score) FROM answers WHERE subtask_id = ? AND EXISTS (SELECT * FROM submissions WHERE task_id = ? AND user_id = ? AND submissions.answer = answers.answer)", subtask.ID, task.ID, team.LeaderID); err != nil {
+				if err := tx.GetContext(ctx, &leaderscore, "SELECT COALESCE(MAX(score),0) FROM answers WHERE subtask_id = ? AND EXISTS (SELECT * FROM submissions WHERE task_id = ? AND user_id = ? AND submissions.answer = answers.answer)", subtask.ID, task.ID, team.LeaderID); err != nil {
 					return Standings{}, err
 				}
 				if subtaskscore < leaderscore {
@@ -193,7 +193,7 @@ func getstandings(ctx context.Context, tx *sqlx.Tx) (Standings, error) {
 
 				if team.Member1ID != nil {
 					member1score := 0
-					if err := tx.GetContext(ctx, &member1score, "SELECT MAX(score) FROM answers WHERE subtask_id = ? AND EXISTS (SELECT * FROM submissions WHERE task_id = ? AND user_id = ? AND submissions.answer = answers.answer)", subtask.ID, task.ID, team.Member1ID); err != nil {
+					if err := tx.GetContext(ctx, &member1score, "SELECT COALESCE(MAX(score),0) FROM answers WHERE subtask_id = ? AND EXISTS (SELECT * FROM submissions WHERE task_id = ? AND user_id = ? AND submissions.answer = answers.answer)", subtask.ID, task.ID, team.Member1ID); err != nil {
 						return Standings{}, err
 					}
 					if subtaskscore < member1score {
@@ -202,7 +202,7 @@ func getstandings(ctx context.Context, tx *sqlx.Tx) (Standings, error) {
 				}
 				if team.Member2ID != nil {
 					member2score := 0
-					if err := tx.GetContext(ctx, &member2score, "SELECT MAX(score) FROM answers WHERE subtask_id = ? AND EXISTS (SELECT * FROM submissions WHERE task_id = ? AND user_id = ? AND submissions.answer = answers.answer)", subtask.ID, task.ID, team.Member2ID); err != nil {
+					if err := tx.GetContext(ctx, &member2score, "SELECT COALESCE(MAX(score),0) FROM answers WHERE subtask_id = ? AND EXISTS (SELECT * FROM submissions WHERE task_id = ? AND user_id = ? AND submissions.answer = answers.answer)", subtask.ID, task.ID, team.Member2ID); err != nil {
 						return Standings{}, err
 					}
 					if subtaskscore < member2score {
