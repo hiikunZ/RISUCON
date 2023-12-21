@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -29,6 +31,13 @@ type Answer struct {
 	SubtaskID int    `db:"subtask_id"`
 	Answer    string `db:"answer"`
 	Score     int    `db:"score"`
+}
+type Submission struct {
+	ID          int       `db:"id"`
+	TaskID      int       `db:"task_id"`
+	UserID      int       `db:"user_id"`
+	SubmittedAt time.Time `db:"submitted_at"`
+	Answer      string    `db:"answer"`
 }
 
 type TaskAbstract struct {
@@ -418,7 +427,159 @@ func submitHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
+type SubmissionDetail struct {
+	TaskName           string    `json:"task_name"`
+	TaskDisplayName    string    `json:"task_display_name"`
+	SubTaskName        string    `json:"subtask_name"`
+	SubTaskDisplayName string    `json:"subtask_display_name"`
+	UserName           string    `json:"user_name"`
+	UserDisplayName    string    `json:"user_display_name"`
+	SubmittedAt        time.Time `json:"submitted_at"`
+	Answer             string    `json:"answer"`
+	Score              int       `json:"score"`
+}
+
 // GET /api/submissions
 func getSubmissionsHandler(c echo.Context) error {
-	return c.NoContent(http.StatusOK)
+	submissionsperpage := 50
+	if err := verifyUserSession(c); err != nil {
+		return err
+	}
+
+	username := c.Get("username").(string)
+
+	tx, err := dbConn.BeginTxx(c.Request().Context(), nil)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to begin transaction: "+err.Error())
+	}
+	defer tx.Rollback()
+
+	user := User{}
+	if err := tx.GetContext(c.Request().Context(), &user, "SELECT * FROM users WHERE name = ?", username); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user: "+err.Error())
+	}
+
+	team := Team{}
+	if username != "admin" {
+		err = tx.GetContext(c.Request().Context(), &team, "SELECT * FROM teams WHERE leader_id = ? OR member1_id = ? OR member2_id = ?", username, username, username)
+		if err == sql.ErrNoRows {
+			return echo.NewHTTPError(http.StatusBadRequest, "you have not joined team")
+		} else if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get team: "+err.Error())
+		}
+	} else if c.QueryParam("team_name") != "" {
+		err = tx.GetContext(c.Request().Context(), &team, "SELECT * FROM teams WHERE name = ?", c.QueryParam("team_name"))
+		if err == sql.ErrNoRows {
+			return echo.NewHTTPError(http.StatusBadRequest, "team not found")
+		} else if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get team: "+err.Error())
+		}
+	}
+
+	conditions := make([]string, 0)
+	params := make([]interface{}, 0)
+
+	conditions = append(conditions, "users.id = ?")
+	params = append(params, user.ID)
+
+	if c.QueryParam("task_name") != "" {
+		task := Task{}
+		err = tx.GetContext(c.Request().Context(), &task, "SELECT * FROM tasks WHERE name = ?", c.QueryParam("task_name"))
+		if err == sql.ErrNoRows {
+			return echo.NewHTTPError(http.StatusBadRequest, "task not found")
+		} else if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get task: "+err.Error())
+		}
+		conditions = append(conditions, "submissions.task_id = ?")
+		params = append(params, task.ID)
+	}
+	if c.QueryParam("user_name") != "" {
+		user := User{}
+		err = tx.GetContext(c.Request().Context(), &user, "SELECT * FROM users WHERE name = ?", c.QueryParam("user_name"))
+		if err == sql.ErrNoRows {
+			return echo.NewHTTPError(http.StatusBadRequest, "user not found")
+		}
+		conditions = append(conditions, "submissions.user_id = ?")
+		params = append(params, user.ID)
+	}
+	if c.QueryParam("filter") != "" {
+		conditions = append(conditions, "answer LIKE ?")
+		params = append(params, "%"+c.QueryParam("filter")+"%")
+	}
+
+	if username != "admin" || c.QueryParam("team_name") != "" {
+		subconditions := "users.id = ?"
+		params = append(params, team.LeaderID)
+		if team.Member1ID != nil {
+			subconditions += " OR users.id = ?"
+			params = append(params, team.Member1ID)
+		}
+		if team.Member2ID != nil {
+			subconditions += " OR users.id = ?"
+			params = append(params, team.Member2ID)
+		}
+		conditions = append(conditions, "("+subconditions+")")
+	}
+
+	submissions := []Submission{}
+	query := "SELECT * FROM submissions " + strings.Join(conditions, " AND ") + " ORDER BY submitted_at DESC"
+	if err := tx.SelectContext(c.Request().Context(), &submissions, query, params...); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get submissions: "+err.Error())
+	}
+
+	res := []SubmissionDetail{}
+	for _, submission := range submissions {
+		submissiondetail := SubmissionDetail{}
+		task := Task{}
+		if err := tx.GetContext(c.Request().Context(), &task, "SELECT * FROM tasks WHERE id = ?", submission.TaskID); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get task: "+err.Error())
+		}
+		submissiondetail.TaskName = task.Name
+		submissiondetail.TaskDisplayName = task.DisplayName
+		
+		answer := Answer{}
+		err = tx.GetContext(c.Request().Context(), &answer, "SELECT * FROM answers WHERE task_id = ? AND answer = ?", task.ID, submission.Answer)
+		if err == sql.ErrNoRows {
+			submissiondetail.SubTaskName = ""
+			submissiondetail.SubTaskDisplayName = ""
+			submissiondetail.Score = 0
+		} else if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get answer: "+err.Error())
+		} else {
+			subtask := Subtask{}
+			if err := tx.GetContext(c.Request().Context(), &subtask, "SELECT * FROM subtasks WHERE id = ?", answer.SubtaskID); err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to get subtask: "+err.Error())
+			}
+			submissiondetail.SubTaskName = subtask.Name
+			submissiondetail.SubTaskDisplayName = subtask.DisplayName
+			submissiondetail.Score = answer.Score
+		}
+
+		user := User{}
+		if err := tx.GetContext(c.Request().Context(), &user, "SELECT * FROM users WHERE id = ?", submission.UserID); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user: "+err.Error())
+		}
+		submissiondetail.UserName = user.Name
+		submissiondetail.UserDisplayName = user.DisplayName
+		submissiondetail.SubmittedAt = submission.SubmittedAt
+		submissiondetail.Answer = submission.Answer
+
+		if c.QueryParam("subtask_name") == "" || c.QueryParam("subtask_name") == submissiondetail.SubTaskName {
+			res = append(res, submissiondetail)
+		}
+	}
+
+	page := 1 // 1-idx
+	if c.QueryParam("page") != "" {
+		page, err = strconv.Atoi(c.QueryParam("page"))
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "failed to parse page: "+err.Error())
+		}
+	}
+	start := (page - 1) * submissionsperpage
+	end := start + submissionsperpage
+	
+	res = res[start:end]
+
+	return c.JSON(http.StatusOK, res)
 }
