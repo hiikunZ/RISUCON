@@ -93,6 +93,11 @@ type LoginRequest struct {
 	Password string `json:"password"` // ハッシュ化されていない
 }
 
+type LoginResponse struct {
+	Name        string `json:"name"`
+	DisplayName string `json:"display_name"`
+}
+
 // POST /api/login
 func loginHandler(c echo.Context) error {
 	ctx := c.Request().Context()
@@ -143,7 +148,10 @@ func loginHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to save session: "+err.Error())
 	}
 
-	return c.NoContent(http.StatusOK)
+	return c.JSON(http.StatusOK, LoginResponse{
+		Name:        usr.Name,
+		DisplayName: usr.DisplayName,
+	})
 }
 
 // POST /api/logout
