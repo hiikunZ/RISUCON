@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"net/http"
 
 	"github.com/labstack/echo-contrib/session"
@@ -42,8 +43,8 @@ func createTaskHandler(c echo.Context) error {
 	}
 
 	req := CreateTaskRequest{}
-	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "failed to bind request: "+err.Error())
+	if err := json.NewDecoder(c.Request().Body).Decode(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "failed to decode the request body as json")
 	}
 
 	tx, err := dbConn.BeginTxx(ctx, nil)

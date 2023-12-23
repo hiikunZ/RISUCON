@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/sha256"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -49,8 +50,8 @@ func registerHandler(c echo.Context) error {
 
 	req := RegisterRequest{}
 
-	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "failed to bind request: "+err.Error())
+	if err := json.NewDecoder(c.Request().Body).Decode(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "failed to decode the request body as json")
 	}
 
 	if req.Name == "" || req.DisplayName == "" || req.Description == "" || req.Password == "" {
@@ -99,8 +100,8 @@ func loginHandler(c echo.Context) error {
 
 	req := LoginRequest{}
 
-	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "failed to bind request: "+err.Error())
+	if err := json.NewDecoder(c.Request().Body).Decode(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "failed to decode the request body as json")
 	}
 
 	tx, err := dbConn.BeginTxx(ctx, nil)

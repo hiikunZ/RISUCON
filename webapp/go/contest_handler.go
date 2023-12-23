@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
@@ -384,8 +385,8 @@ func submitHandler(c echo.Context) error {
 	}
 
 	req := SubmitRequest{}
-	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "failed to bind request: "+err.Error())
+	if err := json.NewDecoder(c.Request().Body).Decode(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "failed to decode the request body as json")
 	}
 
 	task := Task{}
@@ -536,7 +537,7 @@ func getSubmissionsHandler(c echo.Context) error {
 		}
 		submissiondetail.TaskName = task.Name
 		submissiondetail.TaskDisplayName = task.DisplayName
-		
+
 		answer := Answer{}
 		err = tx.GetContext(c.Request().Context(), &answer, "SELECT * FROM answers WHERE task_id = ? AND answer = ?", task.ID, submission.Answer)
 		if err == sql.ErrNoRows {
@@ -578,7 +579,7 @@ func getSubmissionsHandler(c echo.Context) error {
 	}
 	start := (page - 1) * submissionsperpage
 	end := start + submissionsperpage
-	
+
 	res = res[start:end]
 
 	return c.JSON(http.StatusOK, res)

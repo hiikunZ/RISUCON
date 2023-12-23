@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"net/http"
 	"os/exec"
 	"strings"
@@ -48,8 +49,8 @@ func createTeamHandler(c echo.Context) error {
 
 	req := CreateTeamRequest{}
 
-	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "failed to bind request: "+err.Error())
+	if err := json.NewDecoder(c.Request().Body).Decode(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "failed to decode the request body as json")
 	}
 
 	if req.Name == "" || req.DisplayName == "" || req.Description == "" {
@@ -117,8 +118,8 @@ func joinTeamHandler(c echo.Context) error {
 
 	req := JoinTeamRequest{}
 
-	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "failed to bind request: "+err.Error())
+	if err := json.NewDecoder(c.Request().Body).Decode(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "failed to decode the request body as json")
 	}
 
 	tx, err := dbConn.BeginTxx(ctx, nil)
