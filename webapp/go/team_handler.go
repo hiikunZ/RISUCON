@@ -203,7 +203,7 @@ func getTeamHandler(c echo.Context) error {
 	err = tx.GetContext(c.Request().Context(), &team, "SELECT * FROM teams WHERE name = ?", teamname)
 
 	if err == sql.ErrNoRows {
-		return echo.NewHTTPError(http.StatusBadRequest, "team not found")
+		return echo.NewHTTPError(http.StatusNotFound, "team not found")
 	} else if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get team: "+err.Error())
 	}

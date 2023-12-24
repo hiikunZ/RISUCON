@@ -20,10 +20,11 @@ type SubtaskRequest struct {
 	Answers     []AnswerRequest `json:"answers"`
 }
 type CreateTaskRequest struct {
-	Name        string           `json:"name"`
-	DisplayName string           `json:"display_name"`
-	Statement   string           `json:"statement"`
-	Subtasks    []SubtaskRequest `json:"subtasks"`
+	Name            string           `json:"name"`
+	DisplayName     string           `json:"display_name"`
+	Statement       string           `json:"statement"`
+	SubmissionLimit int              `json:"submission_limit"`
+	Subtasks        []SubtaskRequest `json:"subtasks"`
 }
 
 // POST /api/admin/createtask
@@ -61,7 +62,7 @@ func createTaskHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get task: "+err.Error())
 	}
 	var taskID int
-	if err := tx.GetContext(ctx, &taskID, "INSERT INTO tasks (name, display_name, statement) VALUES (?, ?, ?) RETURNING id", req.Name, req.DisplayName, req.Statement); err != nil {
+	if err := tx.GetContext(ctx, &taskID, "INSERT INTO tasks (name, display_name, statement, submission_limit) VALUES (?, ?, ?, ?) RETURNING id", req.Name, req.DisplayName, req.Statement, req.SubmissionLimit); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert task: "+err.Error())
 	}
 

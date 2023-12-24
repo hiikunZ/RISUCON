@@ -27,6 +27,7 @@ CREATE TABLE `tasks` (
     `name` VARCHAR(255) NOT NULL,
     `display_name` VARCHAR(255) NOT NULL,
     `statement` TEXT NOT NULL,
+    `submission_limit` INT NOT NULL,
     UNIQUE `uniq_task_name` (`name`)
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
 

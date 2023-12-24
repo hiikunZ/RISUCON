@@ -15,9 +15,9 @@ INSERT INTO `teams` (`id`, `name`, `display_name`, `leader_id`, `member1_id`, `m
 
 TRUNCATE TABLE `tasks`;
 ALTER TABLE `tasks` AUTO_INCREMENT = 1;
-INSERT INTO `tasks` (`id`, `name`, `display_name`, `statement`) VALUES
-    (1, 'A', '足し算', '足し算をしてください。'),
-    (2, 'B', '引き算', '引き算をしてください。');
+INSERT INTO `tasks` (`id`, `name`, `display_name`, `statement`, `submission_limit`) VALUES
+    (1, 'A', '足し算', '足し算をしてください。', 5),
+    (2, 'B', '引き算', '引き算をしてください。', 10);
 
 TRUNCATE TABLE `subtasks`;
 ALTER TABLE `subtasks` AUTO_INCREMENT = 1;

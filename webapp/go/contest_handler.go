@@ -14,10 +14,11 @@ import (
 )
 
 type Task struct {
-	ID          int    `db:"id"`
-	Name        string `db:"name"`
-	DisplayName string `db:"display_name"`
-	Statement   string `db:"statement"`
+	ID              int    `db:"id"`
+	Name            string `db:"name"`
+	DisplayName     string `db:"display_name"`
+	Statement       string `db:"statement"`
+	SubmissionLimit int    `db:"submission_limit"`
 }
 type Subtask struct {
 	ID          int    `db:"id"`
@@ -42,9 +43,10 @@ type Submission struct {
 }
 
 type TaskAbstract struct {
-	Name        string `json:"name"`
-	DisplayName string `json:"display_name"`
-	MaxScore    int    `json:"max_score"`
+	Name            string `json:"name"`
+	DisplayName     string `json:"display_name"`
+	MaxScore        int    `json:"max_score"`
+	SubmissionLimit int    `json:"submission_limit"`
 }
 
 func gettaskabstarcts(ctx context.Context, tx *sqlx.Tx) ([]TaskAbstract, error) {
@@ -67,9 +69,10 @@ func gettaskabstarcts(ctx context.Context, tx *sqlx.Tx) ([]TaskAbstract, error) 
 			maxscore += maxscore_for_subtask
 		}
 		res = append(res, TaskAbstract{
-			Name:        task.Name,
-			DisplayName: task.DisplayName,
-			MaxScore:    maxscore,
+			Name:            task.Name,
+			DisplayName:     task.DisplayName,
+			MaxScore:        maxscore,
+			SubmissionLimit: task.SubmissionLimit,
 		})
 	}
 
@@ -287,11 +290,12 @@ type SubtaskDetail struct {
 	Score       int    `json:"score"`
 }
 type TaskDetail struct {
-	Name        string          `json:"name"`
-	DisplayName string          `json:"display_name"`
-	Statement   string          `json:"statement"`
-	Score       int             `json:"score"`
-	Subtasks    []SubtaskDetail `json:"subtasks"`
+	Name            string          `json:"name"`
+	DisplayName     string          `json:"display_name"`
+	Statement       string          `json:"statement"`
+	Score           int             `json:"score"`
+	SubmissionLimit int             `json:"submission_limit"`
+	Subtasks        []SubtaskDetail `json:"subtasks"`
 }
 
 // GET /api/tasks/:taskname
@@ -309,7 +313,7 @@ func getTaskHandler(c echo.Context) error {
 	err = tx.GetContext(c.Request().Context(), &task, "SELECT * FROM tasks WHERE name = ?", taskname)
 
 	if err == sql.ErrNoRows {
-		return echo.NewHTTPError(http.StatusBadRequest, "task not found")
+		return echo.NewHTTPError(http.StatusNotFound, "task not found")
 	} else if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get task: "+err.Error())
 	}
@@ -320,10 +324,11 @@ func getTaskHandler(c echo.Context) error {
 	}
 
 	res := TaskDetail{
-		Name:        task.Name,
-		DisplayName: task.DisplayName,
-		Statement:   task.Statement,
-		Score:       0,
+		Name:            task.Name,
+		DisplayName:     task.DisplayName,
+		Statement:       task.Statement,
+		SubmissionLimit: task.SubmissionLimit,
+		Score:           0,
 	}
 
 	for _, subtask := range subtasks {
@@ -395,6 +400,31 @@ func submitHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "task not found")
 	} else if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get task: "+err.Error())
+	}
+
+	submissionscount := 0
+	if err := tx.GetContext(c.Request().Context(), &submissionscount, "SELECT COUNT(*) FROM submissions WHERE task_id = ? AND user_id = ?", task.ID, team.LeaderID); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get submissions count: "+err.Error())
+	}
+
+	if team.Member1ID != nil {
+		cnt := 0
+		if err := tx.GetContext(c.Request().Context(), &cnt, "SELECT COUNT(*) FROM submissions WHERE task_id = ? AND user_id = ?", task.ID, team.Member1ID); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get submissions count: "+err.Error())
+		}
+		submissionscount += cnt
+	}
+
+	if team.Member2ID != nil {
+		cnt := 0
+		if err := tx.GetContext(c.Request().Context(), &cnt, "SELECT COUNT(*) FROM submissions WHERE task_id = ? AND user_id = ?", task.ID, team.Member2ID); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get submissions count: "+err.Error())
+		}
+		submissionscount += cnt
+	}
+
+	if submissionscount >= task.SubmissionLimit {
+		return echo.NewHTTPError(http.StatusBadRequest, "submission limit exceeded")
 	}
 
 	timestamp := time.Unix(req.Timestamp, 0)
