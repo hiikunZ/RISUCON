@@ -148,6 +148,10 @@ func loginHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to save session: "+err.Error())
 	}
 
+	if err := tx.Commit(); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit transaction: "+err.Error())
+	}
+
 	return c.JSON(http.StatusOK, LoginResponse{
 		Name:        usr.Name,
 		DisplayName: usr.DisplayName,

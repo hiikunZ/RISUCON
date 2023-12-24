@@ -84,5 +84,10 @@ func createTaskHandler(c echo.Context) error {
 			}
 		}
 	}
+
+	if err := tx.Commit(); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit transaction: "+err.Error())
+	}
+
 	return c.NoContent(http.StatusOK)
 }

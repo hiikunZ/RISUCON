@@ -259,5 +259,9 @@ func getTeamHandler(c echo.Context) error {
 		res.InvitationCode = team.InvitationCode
 	}
 
+	if err = tx.Commit(); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit transaction: "+err.Error())
+	}
+
 	return c.JSON(http.StatusOK, res)
 }

@@ -474,6 +474,10 @@ func getTaskHandler(c echo.Context) error {
 		}
 	}
 
+	if err := tx.Commit(); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit transaction: "+err.Error())
+	}
+
 	return c.JSON(http.StatusOK, res)
 }
 
@@ -585,6 +589,10 @@ func submitHandler(c echo.Context) error {
 		}
 		res.SubtaskName = subtask.Name
 		res.SubTaskDisplayName = subtask.DisplayName
+	}
+
+	if err := tx.Commit(); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit transaction: "+err.Error())
 	}
 
 	return c.JSON(http.StatusOK, res)
@@ -761,6 +769,10 @@ func getSubmissionsHandler(c echo.Context) error {
 	res := submissionresponse{
 		Submissions: submittiondata[start:end],
 		IsLastPage:  end >= len(submittiondata),
+	}
+
+	if err := tx.Commit(); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit transaction: "+err.Error())
 	}
 
 	return c.JSON(http.StatusOK, res)
