@@ -14,8 +14,8 @@ CREATE TABLE `teams` (
     `name` VARCHAR(255) NOT NULL,
     `display_name` VARCHAR(255) NOT NULL,
     `leader_id` INT NOT NULL,
-    `member1_id` INT DEFAULT NULL,
-    `member2_id` INT DEFAULT NULL,
+    `member1_id` INT DEFAULT -1 NOT NULL,
+    `member2_id` INT DEFAULT -1 NOT NULL,
     `description` TEXT NOT NULL,
     `invitation_code` VARCHAR(255) NOT NULL,
     UNIQUE `uniq_team_name` (`name`)

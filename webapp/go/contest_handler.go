@@ -87,7 +87,7 @@ func gettaskabstarcts(ctx context.Context, tx *sqlx.Tx, c echo.Context) ([]TaskA
 				if err != nil {
 					return []TaskAbstract{}, err
 				}
-				if team.Member1ID != nil {
+				if team.Member1ID != nulluserid {
 					cnt := 0
 					err := tx.GetContext(c.Request().Context(), &cnt, "SELECT COUNT(*) FROM submissions WHERE task_id = ? AND user_id = ?", task.ID, team.Member1ID)
 					if err != nil {
@@ -95,7 +95,7 @@ func gettaskabstarcts(ctx context.Context, tx *sqlx.Tx, c echo.Context) ([]TaskA
 					}
 					submissioncount += cnt
 				}
-				if team.Member2ID != nil {
+				if team.Member2ID != nulluserid {
 					cnt := 0
 					err := tx.GetContext(c.Request().Context(), &cnt, "SELECT COUNT(*) FROM submissions WHERE task_id = ? AND user_id = ?", task.ID, team.Member2ID)
 					if err != nil {
@@ -112,7 +112,7 @@ func gettaskabstarcts(ctx context.Context, tx *sqlx.Tx, c echo.Context) ([]TaskA
 					if score_for_subtask < leaderscore {
 						score_for_subtask = leaderscore
 					}
-					if team.Member1ID != nil {
+					if team.Member1ID != nulluserid {
 						member1score := 0
 						if err := tx.GetContext(ctx, &member1score, "SELECT COALESCE(MAX(score),0) FROM answers WHERE subtask_id = ? AND EXISTS (SELECT * FROM submissions WHERE task_id = ? AND user_id = ? AND submissions.answer = answers.answer)", subtask.ID, task.ID, team.Member1ID); err != nil {
 							return []TaskAbstract{}, err
@@ -121,7 +121,7 @@ func gettaskabstarcts(ctx context.Context, tx *sqlx.Tx, c echo.Context) ([]TaskA
 							score_for_subtask = member1score
 						}
 					}
-					if team.Member2ID != nil {
+					if team.Member2ID != nulluserid {
 						member2score := 0
 						if err := tx.GetContext(ctx, &member2score, "SELECT COALESCE(MAX(score),0) FROM answers WHERE subtask_id = ? AND EXISTS (SELECT * FROM submissions WHERE task_id = ? AND user_id = ? AND submissions.answer = answers.answer)", subtask.ID, task.ID, team.Member2ID); err != nil {
 							return []TaskAbstract{}, err
@@ -226,7 +226,7 @@ func getstandings(ctx context.Context, tx *sqlx.Tx) (Standings, error) {
 		}
 		teamstandings.LeaderName = leader.Name
 		teamstandings.LeaderDisplayName = leader.DisplayName
-		if team.Member1ID != nil {
+		if team.Member1ID != nulluserid {
 			member1 := User{}
 			if err := tx.GetContext(ctx, &member1, "SELECT * FROM users WHERE id = ?", team.Member1ID); err != nil {
 				return Standings{}, err
@@ -234,7 +234,7 @@ func getstandings(ctx context.Context, tx *sqlx.Tx) (Standings, error) {
 			teamstandings.Member1Name = member1.Name
 			teamstandings.Member1DisplayName = member1.DisplayName
 		}
-		if team.Member2ID != nil {
+		if team.Member2ID != nulluserid {
 			member2 := User{}
 			if err := tx.GetContext(ctx, &member2, "SELECT * FROM users WHERE id = ?", team.Member1ID); err != nil {
 				return Standings{}, err
@@ -261,7 +261,7 @@ func getstandings(ctx context.Context, tx *sqlx.Tx) (Standings, error) {
 			if submissioncount > 0 {
 				taskscoringdata.HasSubmitted = true
 			}
-			if team.Member1ID != nil {
+			if team.Member1ID != nulluserid {
 				if err := tx.GetContext(ctx, &submissioncount, "SELECT COUNT(*) FROM submissions WHERE task_id = ? AND user_id = ?", task.ID, team.Member1ID); err != nil {
 					return Standings{}, err
 				}
@@ -269,7 +269,7 @@ func getstandings(ctx context.Context, tx *sqlx.Tx) (Standings, error) {
 					taskscoringdata.HasSubmitted = true
 				}
 			}
-			if team.Member2ID != nil {
+			if team.Member2ID != nulluserid {
 				if err := tx.GetContext(ctx, &submissioncount, "SELECT COUNT(*) FROM submissions WHERE task_id = ? AND user_id = ?", task.ID, team.Member2ID); err != nil {
 					return Standings{}, err
 				}
@@ -289,7 +289,7 @@ func getstandings(ctx context.Context, tx *sqlx.Tx) (Standings, error) {
 					subtaskscore = leaderscore
 				}
 
-				if team.Member1ID != nil {
+				if team.Member1ID != nulluserid {
 					member1score := 0
 					if err := tx.GetContext(ctx, &member1score, "SELECT COALESCE(MAX(score),0) FROM answers WHERE subtask_id = ? AND EXISTS (SELECT * FROM submissions WHERE task_id = ? AND user_id = ? AND submissions.answer = answers.answer)", subtask.ID, task.ID, team.Member1ID); err != nil {
 						return Standings{}, err
@@ -298,7 +298,7 @@ func getstandings(ctx context.Context, tx *sqlx.Tx) (Standings, error) {
 						subtaskscore = member1score
 					}
 				}
-				if team.Member2ID != nil {
+				if team.Member2ID != nulluserid {
 					member2score := 0
 					if err := tx.GetContext(ctx, &member2score, "SELECT COALESCE(MAX(score),0) FROM answers WHERE subtask_id = ? AND EXISTS (SELECT * FROM submissions WHERE task_id = ? AND user_id = ? AND submissions.answer = answers.answer)", subtask.ID, task.ID, team.Member2ID); err != nil {
 						return Standings{}, err
@@ -488,7 +488,7 @@ func getTaskHandler(c echo.Context) error {
 			if err != nil {
 				return echo.NewHTTPError(http.StatusInternalServerError, "failed to get submission count: "+err.Error())
 			}
-			if team.Member1ID != nil {
+			if team.Member1ID != nulluserid {
 				cnt := 0
 				err := tx.GetContext(c.Request().Context(), &cnt, "SELECT COUNT(*) FROM submissions WHERE task_id = ? AND user_id = ?", task.ID, team.Member1ID)
 				if err != nil {
@@ -496,7 +496,7 @@ func getTaskHandler(c echo.Context) error {
 				}
 				res.SubmissionCount += cnt
 			}
-			if team.Member2ID != nil {
+			if team.Member2ID != nulluserid {
 				cnt := 0
 				err := tx.GetContext(c.Request().Context(), &cnt, "SELECT COUNT(*) FROM submissions WHERE task_id = ? AND user_id = ?", task.ID, team.Member2ID)
 				if err != nil {
@@ -514,7 +514,7 @@ func getTaskHandler(c echo.Context) error {
 				if subtaskscore < leaderscore {
 					subtaskscore = leaderscore
 				}
-				if team.Member1ID != nil {
+				if team.Member1ID != nulluserid {
 					member1score := 0
 					if err := tx.GetContext(c.Request().Context(), &member1score, "SELECT COALESCE(MAX(score),0) FROM answers WHERE subtask_id = ? AND EXISTS (SELECT * FROM submissions WHERE task_id = ? AND user_id = ? AND submissions.answer = answers.answer)", subtask.ID, task.ID, team.Member1ID); err != nil {
 						return echo.NewHTTPError(http.StatusInternalServerError, "failed to get subtask score: "+err.Error())
@@ -523,7 +523,7 @@ func getTaskHandler(c echo.Context) error {
 						subtaskscore = member1score
 					}
 				}
-				if team.Member2ID != nil {
+				if team.Member2ID != nulluserid {
 					member2score := 0
 					if err := tx.GetContext(c.Request().Context(), &member2score, "SELECT COALESCE(MAX(score),0) FROM answers WHERE subtask_id = ? AND EXISTS (SELECT * FROM submissions WHERE task_id = ? AND user_id = ? AND submissions.answer = answers.answer)", subtask.ID, task.ID, team.Member2ID); err != nil {
 						return echo.NewHTTPError(http.StatusInternalServerError, "failed to get subtask score: "+err.Error())
@@ -609,7 +609,7 @@ func submitHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get submissions count: "+err.Error())
 	}
 
-	if team.Member1ID != nil {
+	if team.Member1ID != nulluserid {
 		cnt := 0
 		if err := tx.GetContext(c.Request().Context(), &cnt, "SELECT COUNT(*) FROM submissions WHERE task_id = ? AND user_id = ?", task.ID, team.Member1ID); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get submissions count: "+err.Error())
@@ -617,7 +617,7 @@ func submitHandler(c echo.Context) error {
 		submissionscount += cnt
 	}
 
-	if team.Member2ID != nil {
+	if team.Member2ID != nulluserid {
 		cnt := 0
 		if err := tx.GetContext(c.Request().Context(), &cnt, "SELECT COUNT(*) FROM submissions WHERE task_id = ? AND user_id = ?", task.ID, team.Member2ID); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get submissions count: "+err.Error())
@@ -753,11 +753,11 @@ func getSubmissionsHandler(c echo.Context) error {
 	if username != "admin" || c.QueryParam("team_name") != "" {
 		subconditions := "users.id = ?"
 		params = append(params, team.LeaderID)
-		if team.Member1ID != nil {
+		if team.Member1ID != nulluserid {
 			subconditions += " OR users.id = ?"
 			params = append(params, team.Member1ID)
 		}
-		if team.Member2ID != nil {
+		if team.Member2ID != nulluserid {
 			subconditions += " OR users.id = ?"
 			params = append(params, team.Member2ID)
 		}

@@ -11,7 +11,7 @@ TRUNCATE TABLE `teams`;
 ALTER TABLE `teams` AUTO_INCREMENT = 1;
 INSERT INTO `teams` (`id`, `name`, `display_name`, `leader_id`, `member1_id`, `member2_id`, `description`, `invitation_code`) VALUES
     (1, 'team1', 'チーム1', 2, 3, 4, 'チーム1 です', '5e52b7b57ca5dc6d'),
-    (2, 'team2', 'チーム2', 5, NULL, NULL, 'チーム2 です', 'd4dd78d422d8a980');
+    (2, 'team2', 'チーム2', 5, -1, -1, 'チーム2 です', 'd4dd78d422d8a980');
 
 TRUNCATE TABLE `tasks`;
 ALTER TABLE `tasks` AUTO_INCREMENT = 1;

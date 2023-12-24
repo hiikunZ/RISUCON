@@ -16,8 +16,8 @@ type Team struct {
 	Name           string `db:"name"`
 	DisplayName    string `db:"display_name"`
 	LeaderID       int    `db:"leader_id"`
-	Member1ID      *int   `db:"member1_id"`
-	Member2ID      *int   `db:"member2_id"`
+	Member1ID      int    `db:"member1_id"`
+	Member2ID      int    `db:"member2_id"`
 	Description    string `db:"description"`
 	InvitationCode string `db:"invitation_code"`
 }
@@ -91,7 +91,7 @@ func createTeamHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get team: "+err.Error())
 	}
 
-	if _, err = tx.ExecContext(ctx, "INSERT INTO teams (name, display_name, leader_id, description, invitation_code) VALUES (?, ?, ?, ?, ?)", req.Name, req.DisplayName, req.leader_id, req.Description, req.InvitationCode); err != nil {
+	if _, err = tx.ExecContext(ctx, "INSERT INTO teams (name, display_name, leader_id, member1_id, member2_id, description, invitation_code) VALUES (?, ?, ?, ?, ?, ?, ?)", req.Name, req.DisplayName, req.leader_id, nulluserid, nulluserid, req.Description, req.InvitationCode); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert team: "+err.Error())
 	}
 
@@ -156,11 +156,11 @@ func joinTeamHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get team: "+err.Error())
 	}
 
-	if team.Member1ID == nil {
+	if team.Member1ID == nulluserid {
 		if _, err := tx.ExecContext(ctx, "UPDATE teams SET member1_id = ? WHERE name = ?", usr.ID, req.TeamName); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to update team: "+err.Error())
 		}
-	} else if team.Member2ID == nil {
+	} else if team.Member2ID == nulluserid {
 		if _, err := tx.ExecContext(ctx, "UPDATE teams SET member2_id = ? WHERE name = ?", usr.ID, req.TeamName); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to update team: "+err.Error())
 		}
@@ -222,7 +222,7 @@ func getTeamHandler(c echo.Context) error {
 	res.LeaderName = leader.Name
 	res.LeaderDisplayName = leader.DisplayName
 
-	if team.Member1ID != nil {
+	if team.Member1ID != nulluserid {
 		member1 := User{}
 		err = tx.GetContext(c.Request().Context(), &member1, "SELECT * FROM users WHERE id = ?", team.Member1ID)
 		if err != nil {
@@ -235,7 +235,7 @@ func getTeamHandler(c echo.Context) error {
 		res.Member1DisplayName = ""
 	}
 
-	if team.Member2ID != nil {
+	if team.Member2ID != nulluserid {
 		member2 := User{}
 		err = tx.GetContext(c.Request().Context(), &member2, "SELECT * FROM users WHERE id = ?", team.Member2ID)
 		if err != nil {

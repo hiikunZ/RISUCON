@@ -15,6 +15,7 @@ import (
 const (
 	defaultSessionIDKey       = "SESSIONID"
 	defaultSessionUserNameKey = "username"
+	nulluserid                = -1
 )
 
 type User struct {
