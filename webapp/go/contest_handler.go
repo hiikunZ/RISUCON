@@ -47,6 +47,7 @@ type TaskAbstract struct {
 	Name            string `json:"name"`
 	DisplayName     string `json:"display_name"`
 	MaxScore        int    `json:"max_score"`
+	Score           int    `json:"score"`
 	SubmissionLimit int    `json:"submission_limit"`
 	SubmissionCount int    `json:"submission_count"`
 }
@@ -71,6 +72,7 @@ func gettaskabstarcts(ctx context.Context, tx *sqlx.Tx, c echo.Context) ([]TaskA
 			maxscore += maxscore_for_subtask
 		}
 		submissioncount := 0
+		score := 0
 		if err := verifyUserSession(c); err == nil {
 			sess, _ := session.Get(defaultSessionIDKey, c)
 			username, _ := sess.Values[defaultSessionUserNameKey].(string)
@@ -101,6 +103,35 @@ func gettaskabstarcts(ctx context.Context, tx *sqlx.Tx, c echo.Context) ([]TaskA
 					}
 					submissioncount += cnt
 				}
+				for _, subtask := range subtasks {
+					score_for_subtask := 0
+					leaderscore := 0
+					if err := tx.GetContext(ctx, &leaderscore, "SELECT COALESCE(MAX(score),0) FROM answers WHERE subtask_id = ? AND EXISTS (SELECT * FROM submissions WHERE task_id = ? AND user_id = ? AND submissions.answer = answers.answer)", subtask.ID, task.ID, team.LeaderID); err != nil {
+						return []TaskAbstract{}, err
+					}
+					if score_for_subtask < leaderscore {
+						score_for_subtask = leaderscore
+					}
+					if team.Member1ID != nil {
+						member1score := 0
+						if err := tx.GetContext(ctx, &member1score, "SELECT COALESCE(MAX(score),0) FROM answers WHERE subtask_id = ? AND EXISTS (SELECT * FROM submissions WHERE task_id = ? AND user_id = ? AND submissions.answer = answers.answer)", subtask.ID, task.ID, team.Member1ID); err != nil {
+							return []TaskAbstract{}, err
+						}
+						if score_for_subtask < member1score {
+							score_for_subtask = member1score
+						}
+					}
+					if team.Member2ID != nil {
+						member2score := 0
+						if err := tx.GetContext(ctx, &member2score, "SELECT COALESCE(MAX(score),0) FROM answers WHERE subtask_id = ? AND EXISTS (SELECT * FROM submissions WHERE task_id = ? AND user_id = ? AND submissions.answer = answers.answer)", subtask.ID, task.ID, team.Member2ID); err != nil {
+							return []TaskAbstract{}, err
+						}
+						if score_for_subtask < member2score {
+							score_for_subtask = member2score
+						}
+					}
+					score += score_for_subtask
+				}
 			} else if err != sql.ErrNoRows {
 				return []TaskAbstract{}, err
 			}
@@ -109,6 +140,7 @@ func gettaskabstarcts(ctx context.Context, tx *sqlx.Tx, c echo.Context) ([]TaskA
 			Name:            task.Name,
 			DisplayName:     task.DisplayName,
 			MaxScore:        maxscore,
+			Score:           score,
 			SubmissionLimit: task.SubmissionLimit,
 			SubmissionCount: submissioncount,
 		})
@@ -379,12 +411,14 @@ type SubtaskDetail struct {
 	Name        string `json:"name"`
 	DisplayName string `json:"display_name"`
 	Statement   string `json:"statement"`
+	MaxScore    int    `json:"max_score"`
 	Score       int    `json:"score"`
 }
 type TaskDetail struct {
 	Name            string          `json:"name"`
 	DisplayName     string          `json:"display_name"`
 	Statement       string          `json:"statement"`
+	MaxScore        int             `json:"max_score"`
 	Score           int             `json:"score"`
 	SubmissionLimit int             `json:"submission_limit"`
 	SubmissionCount int             `json:"submission_count"`
@@ -421,6 +455,7 @@ func getTaskHandler(c echo.Context) error {
 		DisplayName:     task.DisplayName,
 		Statement:       task.Statement,
 		SubmissionLimit: task.SubmissionLimit,
+		MaxScore:        0,
 		Score:           0,
 		Subtasks:        []SubtaskDetail{},
 		SubmissionCount: 0,
@@ -432,11 +467,11 @@ func getTaskHandler(c echo.Context) error {
 			DisplayName: subtask.DisplayName,
 			Statement:   subtask.Statement,
 		}
-		if err := tx.GetContext(c.Request().Context(), &subtaskdetail.Score, "SELECT MAX(score) FROM answers WHERE subtask_id = ?", subtask.ID); err != nil {
+		if err := tx.GetContext(c.Request().Context(), &subtaskdetail.MaxScore, "SELECT MAX(score) FROM answers WHERE subtask_id = ?", subtask.ID); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get subtask score: "+err.Error())
 		}
 		res.Subtasks = append(res.Subtasks, subtaskdetail)
-		res.Score += subtaskdetail.Score
+		res.MaxScore += subtaskdetail.MaxScore
 	}
 
 	if err := verifyUserSession(c); err == nil {
@@ -468,6 +503,37 @@ func getTaskHandler(c echo.Context) error {
 					return echo.NewHTTPError(http.StatusInternalServerError, "failed to get submission count: "+err.Error())
 				}
 				res.SubmissionCount += cnt
+			}
+
+			for i, subtask := range subtasks {
+				subtaskscore := 0
+				leaderscore := 0
+				if err := tx.GetContext(c.Request().Context(), &leaderscore, "SELECT COALESCE(MAX(score),0) FROM answers WHERE subtask_id = ? AND EXISTS (SELECT * FROM submissions WHERE task_id = ? AND user_id = ? AND submissions.answer = answers.answer)", subtask.ID, task.ID, team.LeaderID); err != nil {
+					return echo.NewHTTPError(http.StatusInternalServerError, "failed to get subtask score: "+err.Error())
+				}
+				if subtaskscore < leaderscore {
+					subtaskscore = leaderscore
+				}
+				if team.Member1ID != nil {
+					member1score := 0
+					if err := tx.GetContext(c.Request().Context(), &member1score, "SELECT COALESCE(MAX(score),0) FROM answers WHERE subtask_id = ? AND EXISTS (SELECT * FROM submissions WHERE task_id = ? AND user_id = ? AND submissions.answer = answers.answer)", subtask.ID, task.ID, team.Member1ID); err != nil {
+						return echo.NewHTTPError(http.StatusInternalServerError, "failed to get subtask score: "+err.Error())
+					}
+					if subtaskscore < member1score {
+						subtaskscore = member1score
+					}
+				}
+				if team.Member2ID != nil {
+					member2score := 0
+					if err := tx.GetContext(c.Request().Context(), &member2score, "SELECT COALESCE(MAX(score),0) FROM answers WHERE subtask_id = ? AND EXISTS (SELECT * FROM submissions WHERE task_id = ? AND user_id = ? AND submissions.answer = answers.answer)", subtask.ID, task.ID, team.Member2ID); err != nil {
+						return echo.NewHTTPError(http.StatusInternalServerError, "failed to get subtask score: "+err.Error())
+					}
+					if subtaskscore < member2score {
+						subtaskscore = member2score
+					}
+				}
+				res.Subtasks[i].Score = subtaskscore
+				res.Score += subtaskscore
 			}
 		} else if err != sql.ErrNoRows {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get team: "+err.Error())
