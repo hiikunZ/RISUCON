@@ -47,9 +47,10 @@ type TaskAbstract struct {
 	DisplayName     string `json:"display_name"`
 	MaxScore        int    `json:"max_score"`
 	SubmissionLimit int    `json:"submission_limit"`
+	SubmissionCount int    `json:"submission_count"`
 }
 
-func gettaskabstarcts(ctx context.Context, tx *sqlx.Tx) ([]TaskAbstract, error) {
+func gettaskabstarcts(ctx context.Context, tx *sqlx.Tx, c echo.Context) ([]TaskAbstract, error) {
 	tasks := []Task{}
 	if err := tx.SelectContext(ctx, &tasks, "SELECT * FROM tasks ORDER BY name"); err != nil {
 		return []TaskAbstract{}, err
@@ -68,11 +69,42 @@ func gettaskabstarcts(ctx context.Context, tx *sqlx.Tx) ([]TaskAbstract, error) 
 			}
 			maxscore += maxscore_for_subtask
 		}
+		submissioncount := 0
+		if err := verifyUserSession(c); err == nil {
+			username := c.Get("username").(string)
+			team := Team{}
+			err := tx.GetContext(c.Request().Context(), &team, "SELECT * FROM teams WHERE leader_id = ? OR member1_id = ? OR member2_id = ?", username, username, username)
+			if err == nil {
+				err := tx.GetContext(c.Request().Context(), &submissioncount, "SELECT COUNT(*) FROM submissions WHERE task_id = ? AND user_id = ?", task.ID, team.LeaderID)
+				if err != nil {
+					return []TaskAbstract{}, err
+				}
+				if team.Member1ID != nil {
+					cnt := 0
+					err := tx.GetContext(c.Request().Context(), &cnt, "SELECT COUNT(*) FROM submissions WHERE task_id = ? AND user_id = ?", task.ID, team.Member1ID)
+					if err != nil {
+						return []TaskAbstract{}, err
+					}
+					submissioncount += cnt
+				}
+				if team.Member2ID != nil {
+					cnt := 0
+					err := tx.GetContext(c.Request().Context(), &cnt, "SELECT COUNT(*) FROM submissions WHERE task_id = ? AND user_id = ?", task.ID, team.Member2ID)
+					if err != nil {
+						return []TaskAbstract{}, err
+					}
+					submissioncount += cnt
+				}
+			} else if err != sql.ErrNoRows {
+				return []TaskAbstract{}, err
+			}
+		}
 		res = append(res, TaskAbstract{
 			Name:            task.Name,
 			DisplayName:     task.DisplayName,
 			MaxScore:        maxscore,
 			SubmissionLimit: task.SubmissionLimit,
+			SubmissionCount: submissioncount,
 		})
 	}
 
@@ -89,7 +121,7 @@ func getTasksHandler(c echo.Context) error {
 	}
 	defer tx.Rollback()
 
-	taskabstarcts, err := gettaskabstarcts(ctx, tx)
+	taskabstarcts, err := gettaskabstarcts(ctx, tx, c)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get taskabstarcts: "+err.Error())
 	}
@@ -249,7 +281,7 @@ func getstandings(ctx context.Context, tx *sqlx.Tx) (Standings, error) {
 	// sort
 	for i := 0; i < len(standings.StandingsData); i++ {
 		for j := i + 1; j < len(standings.StandingsData); j++ {
-			if standings.StandingsData[i].TotalScore < standings.StandingsData[j].TotalScore {
+			if (standings.StandingsData[i].TotalScore < standings.StandingsData[j].TotalScore) || (standings.StandingsData[i].TotalScore == standings.StandingsData[j].TotalScore && standings.StandingsData[i].TeamName > standings.StandingsData[j].TeamName) {
 				tmp := standings.StandingsData[i]
 				standings.StandingsData[i] = standings.StandingsData[j]
 				standings.StandingsData[j] = tmp
@@ -257,7 +289,12 @@ func getstandings(ctx context.Context, tx *sqlx.Tx) (Standings, error) {
 		}
 	}
 	for i := 0; i < len(standings.StandingsData); i++ {
-		standings.StandingsData[i].Rank = i + 1
+		standings.StandingsData[i].Rank = 1
+		for j := 0; j < len(standings.StandingsData); j++ {
+			if standings.StandingsData[i].TotalScore < standings.StandingsData[j].TotalScore {
+				standings.StandingsData[i].Rank++
+			}
+		}
 	}
 
 	return standings, nil
@@ -339,6 +376,7 @@ type TaskDetail struct {
 	Statement       string          `json:"statement"`
 	Score           int             `json:"score"`
 	SubmissionLimit int             `json:"submission_limit"`
+	SubmissionCount int             `json:"submission_count"`
 	Subtasks        []SubtaskDetail `json:"subtasks"`
 }
 
@@ -373,6 +411,8 @@ func getTaskHandler(c echo.Context) error {
 		Statement:       task.Statement,
 		SubmissionLimit: task.SubmissionLimit,
 		Score:           0,
+		Subtasks:        []SubtaskDetail{},
+		SubmissionCount: 0,
 	}
 
 	for _, subtask := range subtasks {
@@ -387,6 +427,37 @@ func getTaskHandler(c echo.Context) error {
 		res.Subtasks = append(res.Subtasks, subtaskdetail)
 		res.Score += subtaskdetail.Score
 	}
+
+	if err := verifyUserSession(c); err == nil {
+		username := c.Get("username").(string)
+		team := Team{}
+		err := tx.GetContext(c.Request().Context(), &team, "SELECT * FROM teams WHERE leader_id = ? OR member1_id = ? OR member2_id = ?", username, username, username)
+		if err == nil {
+			err := tx.GetContext(c.Request().Context(), &res.SubmissionCount, "SELECT COUNT(*) FROM submissions WHERE task_id = ? AND user_id = ?", task.ID, team.LeaderID)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to get submission count: "+err.Error())
+			}
+			if team.Member1ID != nil {
+				cnt := 0
+				err := tx.GetContext(c.Request().Context(), &cnt, "SELECT COUNT(*) FROM submissions WHERE task_id = ? AND user_id = ?", task.ID, team.Member1ID)
+				if err != nil {
+					return echo.NewHTTPError(http.StatusInternalServerError, "failed to get submission count: "+err.Error())
+				}
+				res.SubmissionCount += cnt
+			}
+			if team.Member2ID != nil {
+				cnt := 0
+				err := tx.GetContext(c.Request().Context(), &cnt, "SELECT COUNT(*) FROM submissions WHERE task_id = ? AND user_id = ?", task.ID, team.Member2ID)
+				if err != nil {
+					return echo.NewHTTPError(http.StatusInternalServerError, "failed to get submission count: "+err.Error())
+				}
+				res.SubmissionCount += cnt
+			}
+		} else if err != sql.ErrNoRows {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get team: "+err.Error())
+		}
+	}
+
 	return c.JSON(http.StatusOK, res)
 }
 
