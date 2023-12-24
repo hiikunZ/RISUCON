@@ -311,7 +311,12 @@ func getStandingsHandler(c echo.Context) error {
 
 	start := (page - 1) * standingsperpage
 	end := page * standingsperpage
-
+	if end > len(standings.StandingsData) {
+		end = len(standings.StandingsData)
+	}
+	if start > end {
+		start = end
+	}
 	standings.StandingsData = standings.StandingsData[start:end]
 	standings.Pagecount = (len(standings.StandingsData) + standingsperpage - 1) / standingsperpage
 
@@ -656,6 +661,13 @@ func getSubmissionsHandler(c echo.Context) error {
 	}
 	start := (page - 1) * submissionsperpage
 	end := start + submissionsperpage
+
+	if end > len(submittiondata) {
+		end = len(submittiondata)
+	}
+	if start > end {
+		start = end
+	}
 
 	res := submissionresponse{
 		Submissions: submittiondata[start:end],
