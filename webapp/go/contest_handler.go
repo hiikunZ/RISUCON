@@ -317,8 +317,8 @@ func getStandingsHandler(c echo.Context) error {
 	if start > end {
 		start = end
 	}
-	standings.StandingsData = standings.StandingsData[start:end]
 	standings.Pagecount = (len(standings.StandingsData) + standingsperpage - 1) / standingsperpage
+	standings.StandingsData = standings.StandingsData[start:end]
 
 	if err := tx.Commit(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit transaction: "+err.Error())
