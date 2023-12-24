@@ -502,7 +502,7 @@ func submitHandler(c echo.Context) error {
 	}
 
 	team := Team{}
-	err = tx.GetContext(c.Request().Context(), &team, "SELECT * FROM teams WHERE leader_id = ? OR member1_id = ? OR member2_id = ?", username, username, username)
+	err = tx.GetContext(c.Request().Context(), &team, "SELECT * FROM teams WHERE leader_id = ? OR member1_id = ? OR member2_id = ?", user.ID, user.ID, user.ID)
 	if err == sql.ErrNoRows {
 		return echo.NewHTTPError(http.StatusBadRequest, "you have not joined team")
 	} else if err != nil {
@@ -618,7 +618,7 @@ func getSubmissionsHandler(c echo.Context) error {
 
 	team := Team{}
 	if username != "admin" {
-		err = tx.GetContext(c.Request().Context(), &team, "SELECT * FROM teams WHERE leader_id = ? OR member1_id = ? OR member2_id = ?", username, username, username)
+		err = tx.GetContext(c.Request().Context(), &team, "SELECT * FROM teams WHERE leader_id = ? OR member1_id = ? OR member2_id = ?", user.ID, user.ID, user.ID)
 		if err == sql.ErrNoRows {
 			return echo.NewHTTPError(http.StatusBadRequest, "you have not joined team")
 		} else if err != nil {
