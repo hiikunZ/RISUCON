@@ -122,6 +122,8 @@ type TeamsStandings struct {
 type Standings struct {
 	TasksData     []TaskAbstract   `json:"tasks_data"`
 	StandingsData []TeamsStandings `json:"standings_data"`
+	YourStandings TeamsStandings   `json:"your_standings"`
+	Pagecount     int              `json:"page_count"`
 }
 
 func getstandings(ctx context.Context, tx *sqlx.Tx) (Standings, error) {
@@ -263,6 +265,8 @@ func getstandings(ctx context.Context, tx *sqlx.Tx) (Standings, error) {
 
 // GET /api/stanings
 func getStandingsHandler(c echo.Context) error {
+	standingsperpage := 20
+
 	ctx := c.Request().Context()
 
 	tx, err := dbConn.BeginTxx(ctx, nil)
@@ -275,6 +279,41 @@ func getStandingsHandler(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get standings: "+err.Error())
 	}
+
+	// ログイン時は、自分のチームの情報を追加する
+	// ただし、ログインしているがチームに所属していない場合は空のまま
+	if err := verifyUserSession(c); err == nil {
+		username := c.Get("username").(string)
+		team := Team{}
+		err := tx.GetContext(c.Request().Context(), &team, "SELECT * FROM teams WHERE leader_id = ? OR member1_id = ? OR member2_id = ?", username, username, username)
+		if err == nil {
+			for _, teamstanding := range standings.StandingsData {
+				if teamstanding.TeamName == team.Name {
+					standings.YourStandings = teamstanding
+					break
+				}
+			}
+		} else if err != sql.ErrNoRows {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get team: "+err.Error())
+		}
+	}
+
+	page := 1 // 1-idx
+	if c.QueryParam("page") != "" {
+		page, err = strconv.Atoi(c.QueryParam("page"))
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "failed to parse page: "+err.Error())
+		}
+	}
+	if page < 1 {
+		return echo.NewHTTPError(http.StatusBadRequest, "page must be positive")
+	}
+
+	start := (page - 1) * standingsperpage
+	end := page * standingsperpage
+
+	standings.StandingsData = standings.StandingsData[start:end]
+	standings.Pagecount = (len(standings.StandingsData) + standingsperpage - 1) / standingsperpage
 
 	if err := tx.Commit(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit transaction: "+err.Error())
@@ -470,9 +509,14 @@ type SubmissionDetail struct {
 	Score              int       `json:"score"`
 }
 
+type submissionresponse struct {
+	Submissions []SubmissionDetail `json:"submissions"`
+	IsLastPage  bool               `json:"is_last_page"`
+}
+
 // GET /api/submissions
 func getSubmissionsHandler(c echo.Context) error {
-	submissionsperpage := 50
+	submissionsperpage := 20
 	if err := verifyUserSession(c); err != nil {
 		return err
 	}
@@ -558,7 +602,7 @@ func getSubmissionsHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get submissions: "+err.Error())
 	}
 
-	res := []SubmissionDetail{}
+	submittiondata := []SubmissionDetail{}
 	for _, submission := range submissions {
 		submissiondetail := SubmissionDetail{}
 		task := Task{}
@@ -596,7 +640,7 @@ func getSubmissionsHandler(c echo.Context) error {
 		submissiondetail.Answer = submission.Answer
 
 		if c.QueryParam("subtask_name") == "" || c.QueryParam("subtask_name") == submissiondetail.SubTaskName {
-			res = append(res, submissiondetail)
+			submittiondata = append(submittiondata, submissiondetail)
 		}
 	}
 
@@ -607,10 +651,16 @@ func getSubmissionsHandler(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusBadRequest, "failed to parse page: "+err.Error())
 		}
 	}
+	if page < 1 {
+		return echo.NewHTTPError(http.StatusBadRequest, "page must be positive")
+	}
 	start := (page - 1) * submissionsperpage
 	end := start + submissionsperpage
 
-	res = res[start:end]
+	res := submissionresponse{
+		Submissions: submittiondata[start:end],
+		IsLastPage:  end >= len(submittiondata),
+	}
 
 	return c.JSON(http.StatusOK, res)
 }
