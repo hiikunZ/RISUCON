@@ -74,8 +74,12 @@ func gettaskabstarcts(ctx context.Context, tx *sqlx.Tx, c echo.Context) ([]TaskA
 		if err := verifyUserSession(c); err == nil {
 			sess, _ := session.Get(defaultSessionIDKey, c)
 			username, _ := sess.Values[defaultSessionUserNameKey].(string)
+			user := User{}
+			if err := tx.GetContext(c.Request().Context(), &user, "SELECT * FROM users WHERE name = ?", username); err != nil {
+				return []TaskAbstract{}, err
+			}
 			team := Team{}
-			err := tx.GetContext(c.Request().Context(), &team, "SELECT * FROM teams WHERE leader_id = ? OR member1_id = ? OR member2_id = ?", username, username, username)
+			err := tx.GetContext(c.Request().Context(), &team, "SELECT * FROM teams WHERE leader_id = ? OR member1_id = ? OR member2_id = ?", user.ID, user.ID, user.ID)
 			if err == nil {
 				err := tx.GetContext(c.Request().Context(), &submissioncount, "SELECT COUNT(*) FROM submissions WHERE task_id = ? AND user_id = ?", task.ID, team.LeaderID)
 				if err != nil {
@@ -324,8 +328,12 @@ func getStandingsHandler(c echo.Context) error {
 	if err := verifyUserSession(c); err == nil {
 		sess, _ := session.Get(defaultSessionIDKey, c)
 		username, _ := sess.Values[defaultSessionUserNameKey].(string)
+		user := User{}
+		if err := tx.GetContext(c.Request().Context(), &user, "SELECT * FROM users WHERE name = ?", username); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user: "+err.Error())
+		}
 		team := Team{}
-		err := tx.GetContext(c.Request().Context(), &team, "SELECT * FROM teams WHERE leader_id = ? OR member1_id = ? OR member2_id = ?", username, username, username)
+		err := tx.GetContext(c.Request().Context(), &team, "SELECT * FROM teams WHERE leader_id = ? OR member1_id = ? OR member2_id = ?", user.ID, user.ID, user.ID)
 		if err == nil {
 			for _, teamstanding := range standings.StandingsData {
 				if teamstanding.TeamName == team.Name {
@@ -434,8 +442,12 @@ func getTaskHandler(c echo.Context) error {
 	if err := verifyUserSession(c); err == nil {
 		sess, _ := session.Get(defaultSessionIDKey, c)
 		username, _ := sess.Values[defaultSessionUserNameKey].(string)
+		user := User{}
+		if err := tx.GetContext(c.Request().Context(), &user, "SELECT * FROM users WHERE name = ?", username); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user: "+err.Error())
+		}
 		team := Team{}
-		err := tx.GetContext(c.Request().Context(), &team, "SELECT * FROM teams WHERE leader_id = ? OR member1_id = ? OR member2_id = ?", username, username, username)
+		err := tx.GetContext(c.Request().Context(), &team, "SELECT * FROM teams WHERE leader_id = ? OR member1_id = ? OR member2_id = ?", user.ID, user.ID, user.ID)
 		if err == nil {
 			err := tx.GetContext(c.Request().Context(), &res.SubmissionCount, "SELECT COUNT(*) FROM submissions WHERE task_id = ? AND user_id = ?", task.ID, team.LeaderID)
 			if err != nil {
