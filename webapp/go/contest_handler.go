@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 )
 
@@ -71,7 +72,8 @@ func gettaskabstarcts(ctx context.Context, tx *sqlx.Tx, c echo.Context) ([]TaskA
 		}
 		submissioncount := 0
 		if err := verifyUserSession(c); err == nil {
-			username := c.Get("username").(string)
+			sess, _ := session.Get(defaultSessionIDKey, c)
+			username, _ := sess.Values[defaultSessionUserNameKey].(string)
 			team := Team{}
 			err := tx.GetContext(c.Request().Context(), &team, "SELECT * FROM teams WHERE leader_id = ? OR member1_id = ? OR member2_id = ?", username, username, username)
 			if err == nil {
@@ -320,7 +322,8 @@ func getStandingsHandler(c echo.Context) error {
 	// ログイン時は、自分のチームの情報を追加する
 	// ただし、ログインしているがチームに所属していない場合は空のまま
 	if err := verifyUserSession(c); err == nil {
-		username := c.Get("username").(string)
+		sess, _ := session.Get(defaultSessionIDKey, c)
+		username, _ := sess.Values[defaultSessionUserNameKey].(string)
 		team := Team{}
 		err := tx.GetContext(c.Request().Context(), &team, "SELECT * FROM teams WHERE leader_id = ? OR member1_id = ? OR member2_id = ?", username, username, username)
 		if err == nil {
@@ -429,7 +432,8 @@ func getTaskHandler(c echo.Context) error {
 	}
 
 	if err := verifyUserSession(c); err == nil {
-		username := c.Get("username").(string)
+		sess, _ := session.Get(defaultSessionIDKey, c)
+		username, _ := sess.Values[defaultSessionUserNameKey].(string)
 		team := Team{}
 		err := tx.GetContext(c.Request().Context(), &team, "SELECT * FROM teams WHERE leader_id = ? OR member1_id = ? OR member2_id = ?", username, username, username)
 		if err == nil {
@@ -483,7 +487,8 @@ func submitHandler(c echo.Context) error {
 		return err
 	}
 
-	username := c.Get("username").(string)
+	sess, _ := session.Get(defaultSessionIDKey, c)
+	username, _ := sess.Values[defaultSessionUserNameKey].(string)
 
 	tx, err := dbConn.BeginTxx(c.Request().Context(), nil)
 	if err != nil {
@@ -597,7 +602,8 @@ func getSubmissionsHandler(c echo.Context) error {
 		return err
 	}
 
-	username := c.Get("username").(string)
+	sess, _ := session.Get(defaultSessionIDKey, c)
+	username, _ := sess.Values[defaultSessionUserNameKey].(string)
 
 	tx, err := dbConn.BeginTxx(c.Request().Context(), nil)
 	if err != nil {
