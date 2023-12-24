@@ -131,10 +131,6 @@ func loginHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "authentication failed")
 	}
 
-	if err = tx.Commit(); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit transaction: "+err.Error())
-	}
-
 	sess, err := session.Get(defaultSessionIDKey, c)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get session: "+err.Error())
