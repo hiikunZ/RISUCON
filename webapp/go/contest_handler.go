@@ -236,7 +236,7 @@ func getstandings(ctx context.Context, tx *sqlx.Tx) (Standings, error) {
 		}
 		if team.Member2ID != nulluserid {
 			member2 := User{}
-			if err := tx.GetContext(ctx, &member2, "SELECT * FROM users WHERE id = ?", team.Member1ID); err != nil {
+			if err := tx.GetContext(ctx, &member2, "SELECT * FROM users WHERE id = ?", team.Member2ID); err != nil {
 				return Standings{}, err
 			}
 			teamstandings.Member2Name = member2.Name
