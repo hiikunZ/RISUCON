@@ -694,7 +694,7 @@ type SubmissionDetail struct {
 
 type submissionresponse struct {
 	Submissions     []SubmissionDetail `json:"submissions"`
-	SubmittionCount int                `json:"submission_count"`
+	SubmissionCount int                `json:"submission_count"`
 }
 
 // GET /api/submissions
@@ -783,7 +783,7 @@ func getSubmissionsHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get submissions: "+err.Error())
 	}
 
-	submittiondata := []SubmissionDetail{}
+	submissiondata := []SubmissionDetail{}
 	for _, submission := range submissions {
 		submissiondetail := SubmissionDetail{}
 		task := Task{}
@@ -821,7 +821,7 @@ func getSubmissionsHandler(c echo.Context) error {
 		submissiondetail.Answer = submission.Answer
 
 		if c.QueryParam("subtask_name") == "" || c.QueryParam("subtask_name") == submissiondetail.SubTaskName {
-			submittiondata = append(submittiondata, submissiondetail)
+			submissiondata = append(submissiondata, submissiondetail)
 		}
 	}
 
@@ -838,16 +838,16 @@ func getSubmissionsHandler(c echo.Context) error {
 	start := (page - 1) * submissionsperpage
 	end := start + submissionsperpage
 
-	if end > len(submittiondata) {
-		end = len(submittiondata)
+	if end > len(submissiondata) {
+		end = len(submissiondata)
 	}
 	if start > end {
 		start = end
 	}
 
 	res := submissionresponse{
-		Submissions: submittiondata[start:end],
-		SubmittionCount: len(submittiondata),
+		Submissions: submissiondata[start:end],
+		SubmissionCount: len(submissiondata),
 	}
 
 	if err := tx.Commit(); err != nil {
