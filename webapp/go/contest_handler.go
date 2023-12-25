@@ -193,7 +193,7 @@ type Standings struct {
 	TasksData     []TaskAbstract   `json:"tasks_data"`
 	StandingsData []TeamsStandings `json:"standings_data"`
 	YourStandings TeamsStandings   `json:"your_standings"`
-	Pagecount     int              `json:"page_count"`
+	Teamcount     int              `json:"team_count"`
 }
 
 func getstandings(ctx context.Context, tx *sqlx.Tx) (Standings, error) {
@@ -410,7 +410,7 @@ func getStandingsHandler(c echo.Context) error {
 	if start > end {
 		start = end
 	}
-	standings.Pagecount = (len(standings.StandingsData) + standingsperpage - 1) / standingsperpage
+	standings.Teamcount = len(standings.StandingsData)
 	standings.StandingsData = standings.StandingsData[start:end]
 
 	if err := tx.Commit(); err != nil {
@@ -693,8 +693,8 @@ type SubmissionDetail struct {
 }
 
 type submissionresponse struct {
-	Submissions []SubmissionDetail `json:"submissions"`
-	IsLastPage  bool               `json:"is_last_page"`
+	Submissions     []SubmissionDetail `json:"submissions"`
+	SubmittionCount int                `json:"submission_count"`
 }
 
 // GET /api/submissions
@@ -850,7 +850,7 @@ func getSubmissionsHandler(c echo.Context) error {
 
 	res := submissionresponse{
 		Submissions: submittiondata[start:end],
-		IsLastPage:  end >= len(submittiondata),
+		SubmittionCount: len(submittiondata),
 	}
 
 	if err := tx.Commit(); err != nil {
