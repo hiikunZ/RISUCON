@@ -738,7 +738,7 @@ func getSubmissionsHandler(c echo.Context) error {
 	conditions := make([]string, 0)
 	params := make([]interface{}, 0)
 
-	conditions = append(conditions, "users.id = ?")
+	conditions = append(conditions, "user_id = ?")
 	params = append(params, user.ID)
 
 	if c.QueryParam("task_name") != "" {
@@ -767,14 +767,14 @@ func getSubmissionsHandler(c echo.Context) error {
 	}
 
 	if username != "admin" || c.QueryParam("team_name") != "" {
-		subconditions := "users.id = ?"
+		subconditions := "user_id = ?"
 		params = append(params, team.LeaderID)
 		if team.Member1ID != nulluserid {
-			subconditions += " OR users.id = ?"
+			subconditions += " OR user_id = ?"
 			params = append(params, team.Member1ID)
 		}
 		if team.Member2ID != nulluserid {
-			subconditions += " OR users.id = ?"
+			subconditions += " OR user_id = ?"
 			params = append(params, team.Member2ID)
 		}
 		conditions = append(conditions, "("+subconditions+")")
