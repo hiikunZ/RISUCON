@@ -687,7 +687,7 @@ type SubmissionDetail struct {
 	SubTaskDisplayName string    `json:"subtask_display_name"`
 	UserName           string    `json:"user_name"`
 	UserDisplayName    string    `json:"user_display_name"`
-	SubmittedAt        time.Time `json:"submitted_at"`
+	SubmittedAt        int64 `json:"submitted_at"`
 	Answer             string    `json:"answer"`
 	Score              int       `json:"score"`
 }
@@ -817,7 +817,7 @@ func getSubmissionsHandler(c echo.Context) error {
 		}
 		submissiondetail.UserName = user.Name
 		submissiondetail.UserDisplayName = user.DisplayName
-		submissiondetail.SubmittedAt = submission.SubmittedAt
+		submissiondetail.SubmittedAt = submission.SubmittedAt.Unix()
 		submissiondetail.Answer = submission.Answer
 
 		if c.QueryParam("subtask_name") == "" || c.QueryParam("subtask_name") == submissiondetail.SubTaskName {
