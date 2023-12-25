@@ -681,15 +681,16 @@ func submitHandler(c echo.Context) error {
 }
 
 type SubmissionDetail struct {
-	TaskName           string    `json:"task_name"`
-	TaskDisplayName    string    `json:"task_display_name"`
-	SubTaskName        string    `json:"subtask_name"`
-	SubTaskDisplayName string    `json:"subtask_display_name"`
-	UserName           string    `json:"user_name"`
-	UserDisplayName    string    `json:"user_display_name"`
-	SubmittedAt        int64 `json:"submitted_at"`
-	Answer             string    `json:"answer"`
-	Score              int       `json:"score"`
+	TaskName           string `json:"task_name"`
+	TaskDisplayName    string `json:"task_display_name"`
+	SubTaskName        string `json:"subtask_name"`
+	SubTaskDisplayName string `json:"subtask_display_name"`
+	SubTaskMaxScore    int    `json:"subtask_max_score"`
+	UserName           string `json:"user_name"`
+	UserDisplayName    string `json:"user_display_name"`
+	SubmittedAt        int64  `json:"submitted_at"`
+	Answer             string `json:"answer"`
+	Score              int    `json:"score"`
 }
 
 type submissionresponse struct {
@@ -799,6 +800,7 @@ func getSubmissionsHandler(c echo.Context) error {
 			submissiondetail.SubTaskName = ""
 			submissiondetail.SubTaskDisplayName = ""
 			submissiondetail.Score = 0
+			submissiondetail.SubTaskMaxScore = 0
 		} else if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get answer: "+err.Error())
 		} else {
@@ -809,6 +811,10 @@ func getSubmissionsHandler(c echo.Context) error {
 			submissiondetail.SubTaskName = subtask.Name
 			submissiondetail.SubTaskDisplayName = subtask.DisplayName
 			submissiondetail.Score = answer.Score
+
+			if err := tx.GetContext(c.Request().Context(), &submissiondetail.SubTaskMaxScore, "SELECT MAX(score) FROM answers WHERE subtask_id = ?", subtask.ID); err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to get subtask score: "+err.Error())
+			}
 		}
 
 		user := User{}
@@ -846,7 +852,7 @@ func getSubmissionsHandler(c echo.Context) error {
 	}
 
 	res := submissionresponse{
-		Submissions: submissiondata[start:end],
+		Submissions:     submissiondata[start:end],
 		SubmissionCount: len(submissiondata),
 	}
 
