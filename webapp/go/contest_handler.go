@@ -554,10 +554,11 @@ type SubmitRequest struct {
 }
 
 type SubmitResponse struct {
-	IsScored           bool   `json:"is_scored"`
-	Score              int    `json:"score"`
-	SubtaskName        string `json:"subtask_name"`
-	SubTaskDisplayName string `json:"subtask_display_name"`
+	IsScored             bool   `json:"is_scored"`
+	Score                int    `json:"score"`
+	SubtaskName          string `json:"subtask_name"`
+	SubTaskDisplayName   string `json:"subtask_display_name"`
+	RemainingSubmissions int    `json:"remaining_submissions"`
 }
 
 // POST /api/submit
@@ -644,6 +645,7 @@ func submitHandler(c echo.Context) error {
 		res.Score = 0
 		res.SubtaskName = ""
 		res.SubTaskDisplayName = ""
+		res.RemainingSubmissions = task.SubmissionLimit - submissionscount - 1
 	} else if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get answer: "+err.Error())
 	} else {
@@ -655,6 +657,7 @@ func submitHandler(c echo.Context) error {
 		}
 		res.SubtaskName = subtask.Name
 		res.SubTaskDisplayName = subtask.DisplayName
+		res.RemainingSubmissions = task.SubmissionLimit - submissionscount - 1
 	}
 
 	if err := tx.Commit(); err != nil {
