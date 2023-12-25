@@ -738,9 +738,6 @@ func getSubmissionsHandler(c echo.Context) error {
 	conditions := make([]string, 0)
 	params := make([]interface{}, 0)
 
-	conditions = append(conditions, "user_id = ?")
-	params = append(params, user.ID)
-
 	if c.QueryParam("task_name") != "" {
 		task := Task{}
 		err = tx.GetContext(c.Request().Context(), &task, "SELECT * FROM tasks WHERE name = ?", c.QueryParam("task_name"))
@@ -749,7 +746,7 @@ func getSubmissionsHandler(c echo.Context) error {
 		} else if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get task: "+err.Error())
 		}
-		conditions = append(conditions, "submissions.task_id = ?")
+		conditions = append(conditions, "task_id = ?")
 		params = append(params, task.ID)
 	}
 	if c.QueryParam("user_name") != "" {
@@ -758,7 +755,7 @@ func getSubmissionsHandler(c echo.Context) error {
 		if err == sql.ErrNoRows {
 			return echo.NewHTTPError(http.StatusBadRequest, "user not found")
 		}
-		conditions = append(conditions, "submissions.user_id = ?")
+		conditions = append(conditions, "user_id = ?")
 		params = append(params, user.ID)
 	}
 	if c.QueryParam("filter") != "" {
