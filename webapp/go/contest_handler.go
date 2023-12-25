@@ -47,9 +47,9 @@ type TaskAbstract struct {
 	Name            string `json:"name"`
 	DisplayName     string `json:"display_name"`
 	MaxScore        int    `json:"max_score"`
-	Score           int    `json:"score"`
-	SubmissionLimit int    `json:"submission_limit"`
-	SubmissionCount int    `json:"submission_count"`
+	Score           int    `json:"score,omitempty"`
+	SubmissionLimit int    `json:"submission_limit,omitempty"`
+	SubmissionCount int    `json:"submission_count,omitempty"`
 }
 
 func gettaskabstarcts(ctx context.Context, tx *sqlx.Tx, c echo.Context) ([]TaskAbstract, error) {
@@ -204,9 +204,22 @@ func getstandings(ctx context.Context, tx *sqlx.Tx) (Standings, error) {
 		return Standings{}, err
 	}
 	for _, task := range tasks {
+		subtasks := []Subtask{}
+		if err := tx.SelectContext(ctx, &subtasks, "SELECT * FROM subtasks WHERE task_id = ?", task.ID); err != nil {
+			return Standings{}, err
+		}
+		maxscore := 0
+		for _, subtask := range subtasks {
+			subtaskmaxscore := 0
+			if err := tx.GetContext(ctx, &subtaskmaxscore, "SELECT MAX(score) FROM answers WHERE subtask_id = ?", subtask.ID); err != nil {
+				return Standings{}, err
+			}
+			maxscore += subtaskmaxscore
+		}
 		standings.TasksData = append(standings.TasksData, TaskAbstract{
 			Name:        task.Name,
 			DisplayName: task.DisplayName,
+			MaxScore:    maxscore,
 		})
 	}
 
