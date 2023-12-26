@@ -192,8 +192,6 @@ type TeamsStandings struct {
 type Standings struct {
 	TasksData     []TaskAbstract   `json:"tasks_data"`
 	StandingsData []TeamsStandings `json:"standings_data"`
-	YourStandings TeamsStandings   `json:"your_standings"`
-	Teamcount     int              `json:"team_count"`
 }
 
 func getstandings(ctx context.Context, tx *sqlx.Tx) (Standings, error) {
@@ -353,8 +351,6 @@ func getstandings(ctx context.Context, tx *sqlx.Tx) (Standings, error) {
 
 // GET /api/stanings
 func getStandingsHandler(c echo.Context) error {
-	standingsperpage := 20
-
 	ctx := c.Request().Context()
 
 	tx, err := dbConn.BeginTxx(ctx, nil)
@@ -367,51 +363,6 @@ func getStandingsHandler(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get standings: "+err.Error())
 	}
-
-	// ログイン時は、自分のチームの情報を追加する
-	// ただし、ログインしているがチームに所属していない場合は空のまま
-	if err := verifyUserSession(c); err == nil {
-		sess, _ := session.Get(defaultSessionIDKey, c)
-		username, _ := sess.Values[defaultSessionUserNameKey].(string)
-		user := User{}
-		if err := tx.GetContext(c.Request().Context(), &user, "SELECT * FROM users WHERE name = ?", username); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user: "+err.Error())
-		}
-		team := Team{}
-		err := tx.GetContext(c.Request().Context(), &team, "SELECT * FROM teams WHERE leader_id = ? OR member1_id = ? OR member2_id = ?", user.ID, user.ID, user.ID)
-		if err == nil {
-			for _, teamstanding := range standings.StandingsData {
-				if teamstanding.TeamName == team.Name {
-					standings.YourStandings = teamstanding
-					break
-				}
-			}
-		} else if err != sql.ErrNoRows {
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get team: "+err.Error())
-		}
-	}
-
-	page := 1 // 1-idx
-	if c.QueryParam("page") != "" {
-		page, err = strconv.Atoi(c.QueryParam("page"))
-		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "failed to parse page: "+err.Error())
-		}
-	}
-	if page < 1 {
-		return echo.NewHTTPError(http.StatusBadRequest, "page must be positive")
-	}
-
-	start := (page - 1) * standingsperpage
-	end := page * standingsperpage
-	if end > len(standings.StandingsData) {
-		end = len(standings.StandingsData)
-	}
-	if start > end {
-		start = end
-	}
-	standings.Teamcount = len(standings.StandingsData)
-	standings.StandingsData = standings.StandingsData[start:end]
 
 	if err := tx.Commit(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit transaction: "+err.Error())
