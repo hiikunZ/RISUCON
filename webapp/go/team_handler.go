@@ -185,6 +185,7 @@ type TeamResponse struct {
 	Member2Name        string `json:"member2_name"`
 	Member2DisplayName string `json:"member2_display_name"`
 	Description        string `json:"description"`
+	SubmissionCount    int    `json:"submission_count"`
 	InvitationCode     string `json:"invitation_code"`
 }
 
@@ -222,6 +223,10 @@ func getTeamHandler(c echo.Context) error {
 	res.LeaderName = leader.Name
 	res.LeaderDisplayName = leader.DisplayName
 
+	if err = tx.GetContext(c.Request().Context(), &res.SubmissionCount, "SELECT COUNT(*) FROM submissions WHERE user_id = ?", leader.ID); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get submission count: "+err.Error())
+	}
+
 	if team.Member1ID != nulluserid {
 		member1 := User{}
 		err = tx.GetContext(c.Request().Context(), &member1, "SELECT * FROM users WHERE id = ?", team.Member1ID)
@@ -230,6 +235,12 @@ func getTeamHandler(c echo.Context) error {
 		}
 		res.Member1Name = member1.Name
 		res.Member1DisplayName = member1.DisplayName
+
+		membersubmissioncount := 0
+		if err = tx.GetContext(c.Request().Context(), &membersubmissioncount, "SELECT COUNT(*) FROM submissions WHERE user_id = ?", member1.ID); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get submission count: "+err.Error())
+		}
+		res.SubmissionCount += membersubmissioncount
 	} else {
 		res.Member1Name = ""
 		res.Member1DisplayName = ""
@@ -243,6 +254,12 @@ func getTeamHandler(c echo.Context) error {
 		}
 		res.Member2Name = member2.Name
 		res.Member2DisplayName = member2.DisplayName
+
+		membersubmissioncount := 0
+		if err = tx.GetContext(c.Request().Context(), &membersubmissioncount, "SELECT COUNT(*) FROM submissions WHERE user_id = ?", member2.ID); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get submission count: "+err.Error())
+		}
+		res.SubmissionCount += membersubmissioncount
 	} else {
 		res.Member2Name = ""
 		res.Member2DisplayName = ""
