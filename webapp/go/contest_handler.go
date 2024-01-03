@@ -711,8 +711,8 @@ func getSubmissionsHandler(c echo.Context) error {
 		params = append(params, user.ID)
 	}
 	if c.QueryParam("filter") != "" {
-		conditions = append(conditions, "answer LIKE ?")
-		params = append(params, "%"+c.QueryParam("filter")+"%")
+		conditions = append(conditions, "answer LIKE CONCAT('%', ?, '%')")
+		params = append(params, c.QueryParam("filter"))
 	}
 
 	if username != "admin" || c.QueryParam("team_name") != "" {
