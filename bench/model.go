@@ -2,9 +2,12 @@ package bench
 
 import (
 	"sync"
+	"time"
 
 	"github.com/isucon/isucandar/agent"
 )
+
+// benchmarker 内部で使用するモデルを集約するファイル
 
 type User struct {
 	mu sync.RWMutex
@@ -15,6 +18,49 @@ type User struct {
 	Password    string
 
 	Agent *agent.Agent
+}
+
+type Team struct {
+	Name               string
+	DisplayName        string
+	LeaderName         string
+	LeaderDisplayName  string
+	Member1Name        string
+	Member1DisplayName string
+	Member2Name        string
+	Member2DisplayName string
+	Description        string
+	InvitationCode     string
+}
+
+type Task struct {
+	Name            string
+	DisplayName     string
+	Statement       string
+	SubmissionLimit int
+	Subtasks        []Subtask
+}
+
+type Subtask struct {
+	Name        string
+	DisplayName string
+	Statement   string
+	Answers     []Answer
+}
+
+type Answer struct {
+	Answer string
+	Score  int
+}
+
+type Submission struct {
+	UserName        string
+	UserDisplayName string
+	TaskName        string
+	TeamDisplayname string
+	Subtaskname     string
+	SubmittedAt     time.Time
+	Answer          string
 }
 
 func (u *User) GetAgent(o Option) (*agent.Agent, error) {
@@ -45,4 +91,3 @@ func (u *User) ClearAgent() {
 
 	u.Agent = nil
 }
-
