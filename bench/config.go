@@ -26,9 +26,9 @@ func (o Option) String() string {
 		fmt.Sprintf("--request-timeout=%s", o.RequestTimeout.String()),
 		fmt.Sprintf("--initialize-request-timeout=%s", o.InitializeRequestTimeout.String()),
 		fmt.Sprintf("--exit-error-on-fail=%v", o.ExitErrorOnFail),
-		fmt.Sprintf("--stage=%s", o.Stage),
-		fmt.Sprintf("--max-parallelism=%d", o.Parallelism),
-		fmt.Sprintf("--prepare-only=%v", o.PrepareOnly),
+		// fmt.Sprintf("--stage=%s", o.Stage),
+		// fmt.Sprintf("--max-parallelism=%d", o.Parallelism),
+		// fmt.Sprintf("--prepare-only=%v", o.PrepareOnly),
 	}
 
 	return strings.Join(args, " ")

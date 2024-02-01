@@ -59,6 +59,10 @@ func main() {
 
 	result := benchmark.Start(ctx)
 
+	// 結果の集計のために少し待つ
+	result.Errors.Wait()
+	time.Sleep(3 * time.Second)
+
 	for _, err := range result.Errors.All() {
 		ContestantLogger.Printf("%v", err)
 		AdminLogger.Printf("%+v", err)
