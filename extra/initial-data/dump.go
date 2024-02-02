@@ -145,7 +145,8 @@ func DumpDatatoSQL(users []User, teams []Team, submissions []Submission, tasks [
 	fmt.Fprintf(file, "ALTER TABLE `submissions` AUTO_INCREMENT = 1;\n")
 	fmt.Fprintf(file, "INSERT INTO `submissions` (`id`, `task_id`, `user_id`, `submitted_at`, `answer`) VALUES\n")
 	for i, submission := range submissions {
-		fmt.Fprintf(file, "(%d, %d, %d, '%s', '%s')", submission.ID, submission.TaskID, submission.UserID, submission.SubmittedAt, submission.Answer)
+		submittedat := submission.SubmittedAt.Format("2006-01-02 15:04:05")
+		fmt.Fprintf(file, "(%d, %d, %d, '%s', '%s')", submission.ID, submission.TaskID, submission.UserID, submittedat, submission.Answer)
 		if i != len(submissions)-1 {
 			fmt.Fprintf(file, ",\n")
 		} else {
