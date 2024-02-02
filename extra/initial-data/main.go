@@ -24,20 +24,22 @@ func main() {
 
 	// Admin
 	users = append(users, User{
-		ID:          1,
-		Name:        "admin",
-		DisplayName: "管理者",
-		Description: "管理者アカウントです。",
-		Password:    "admin",
+		ID:            1,
+		Name:          "admin",
+		DisplayName:   "管理者",
+		Description:   "管理者アカウントです。",
+		Password:      "admin",
+		SubmissionIDs: []int{},
 	})
 
 	// テスト用ユーザー
 	users = append(users, User{
-		ID:          2,
-		Name:        "risucon",
-		DisplayName: "risucon",
-		Description: "テスト用アカウントです。",
-		Password:    "risucon",
+		ID:            2,
+		Name:          "risucon",
+		DisplayName:   "risucon",
+		Description:   "テスト用アカウントです。",
+		Password:      "risucon",
+		SubmissionIDs: []int{},
 	})
 
 	// テスト用チーム
@@ -110,7 +112,7 @@ func main() {
 	}
 
 	// submissions を シャッフル
-	rand.Shuffle(len(submissions), func(i, j int) {
+	rng.Shuffle(len(submissions), func(i, j int) {
 		submissions[i], submissions[j] = submissions[j], submissions[i]
 	})
 
@@ -120,6 +122,8 @@ func main() {
 	for i := 0; i < len(submissions); i++ {
 		submissions[i].ID = i + 1
 		submissions[i].SubmittedAt = firstsubtime.Add(time.Duration(i) * time.Second)
+		submituserid := submissions[i].UserID
+		users[submituserid-1].SubmissionIDs = append(users[submituserid-1].SubmissionIDs, i+1)
 	}
 
 	DumpUserstoJSON(users)

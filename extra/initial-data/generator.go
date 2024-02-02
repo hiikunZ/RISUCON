@@ -45,11 +45,12 @@ func Usergen() User {
 	description := gakunen[gakunenidx] + "の" + displayname + "です。よろしくお願いします。"
 
 	return User{
-		ID:          -1,
-		Name:        name,
-		DisplayName: displayname,
-		Description: description,
-		Password:    password,
+		ID:            -1,
+		Name:          name,
+		DisplayName:   displayname,
+		Description:   description,
+		Password:      password,
+		SubmissionIDs: []int{},
 	}
 }
 
