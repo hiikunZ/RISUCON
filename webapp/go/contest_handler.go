@@ -522,6 +522,7 @@ type SubmitResponse struct {
 	Score                int    `json:"score"`
 	SubtaskName          string `json:"subtask_name"`
 	SubTaskDisplayName   string `json:"subtask_display_name"`
+	SubTaskMaxScore      int    `json:"subtask_max_score"`
 	RemainingSubmissions int    `json:"remaining_submissions"`
 }
 
@@ -618,6 +619,9 @@ func submitHandler(c echo.Context) error {
 		subtask := Subtask{}
 		if err := tx.GetContext(c.Request().Context(), &subtask, "SELECT * FROM subtasks WHERE id = ?", answer.SubtaskID); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get subtask: "+err.Error())
+		}
+		if err := tx.GetContext(c.Request().Context(), &res.SubTaskMaxScore, "SELECT MAX(score) FROM answers WHERE subtask_id = ?", subtask.ID); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get subtask max score: "+err.Error())
 		}
 		res.SubtaskName = subtask.Name
 		res.SubTaskDisplayName = subtask.DisplayName
