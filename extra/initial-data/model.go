@@ -1,4 +1,4 @@
-package initialdata_generator
+package main
 
 import (
 	"time"
@@ -9,52 +9,59 @@ const (
 )
 
 type User struct {
-	ID          int    `db:"id"`
-	Name        string `db:"name"`
-	DisplayName string `db:"display_name"`
-	Description string `db:"description"`
-	Passhash    string `db:"passhash"`
+	ID            int    `json:"id"`
+	Name          string `json:"name"`
+	DisplayName   string `json:"display_name"`
+	Description   string `json:"description"`
+	Password      string `json:"password"` // Passhash は dump するときに計算する
+	SubmissionIDs []int  `json:"submission_ids"`
 }
 
 type Team struct {
-	ID             int    `db:"id"`
-	Name           string `db:"name"`
-	DisplayName    string `db:"display_name"`
-	LeaderID       int    `db:"leader_id"`
-	Member1ID      int    `db:"member1_id"`
-	Member2ID      int    `db:"member2_id"`
-	Description    string `db:"description"`
-	InvitationCode string `db:"invitation_code"`
+	ID             int    `json:"id"`
+	Name           string `json:"name"`
+	DisplayName    string `json:"display_name"`
+	LeaderID       int    `json:"leader_id"`
+	Member1ID      int    `json:"member1_id"`
+	Member2ID      int    `json:"member2_id"`
+	Description    string `json:"description"`
+	InvitationCode string `json:"invitation_code"`
 }
 
 type Task struct {
-	ID              int    `db:"id"`
-	Name            string `db:"name"`
-	DisplayName     string `db:"display_name"`
-	Statement       string `db:"statement"`
-	SubmissionLimit int    `db:"submission_limit"`
+	ID              int       `json:"id"`
+	Name            string    `json:"name"`
+	DisplayName     string    `json:"display_name"`
+	Statement       string    `json:"statement"`
+	SubmissionLimit int       `json:"submission_limit"`
+	SubTasks        []Subtask `json:"subtasks"`
+	MaxScore        int       `json:"max_score"`
 }
 
 type Subtask struct {
-	ID          int    `db:"id"`
-	Name        string `db:"name"`
-	DisplayName string `db:"display_name"`
-	TaskID      int    `db:"task_id"`
-	Statement   string `db:"statement"`
+	ID          int      `json:"id"`
+	Name        string   `json:"name"`
+	DisplayName string   `json:"display_name"`
+	TaskID      int      `json:"task_id"`
+	Statement   string   `json:"statement"`
+	Answers     []Answer `json:"answers"`
+	MaxScore    int      `json:"max_score"`
 }
 
 type Answer struct {
-	ID        int    `db:"id"`
-	TaskID    int    `db:"task_id"`
-	SubtaskID int    `db:"subtask_id"`
-	Answer    string `db:"answer"`
-	Score     int    `db:"score"`
+	ID        int    `json:"id"`
+	TaskID    int    `json:"task_id"`
+	SubtaskID int    `json:"subtask_id"`
+	Answer    string `json:"answer"`
+	Score     int    `json:"score"`
 }
 
 type Submission struct {
-	ID          int       `db:"id"`
-	TaskID      int       `db:"task_id"`
-	UserID      int       `db:"user_id"`
-	SubmittedAt time.Time `db:"submitted_at"`
-	Answer      string    `db:"answer"`
+	ID          int       `json:"id"`
+	TaskID      int       `json:"task_id"`
+	UserID      int       `json:"user_id"`
+	SubmittedAt time.Time `json:"submitted_at"`
+	Answer      string    `json:"answer"`
+	SubTaskid   int       `json:"subtask_id"`
+	Score       int       `json:"score"`
 }
