@@ -7,60 +7,69 @@ import (
 	"github.com/isucon/isucandar/agent"
 )
 
+const (
+	nulluserid = -1
+)
+
 // benchmarker 内部で使用するモデルを集約するファイル
-
 type User struct {
-	mu sync.RWMutex
-
-	Name        string
-	DisplayName string
-	Description string
-	Password    string
-
-	Agent *agent.Agent
+	mu            sync.RWMutex
+	ID            int    `json:"id"`
+	Name          string `json:"name"`
+	DisplayName   string `json:"display_name"`
+	Description   string `json:"description"`
+	Password      string `json:"password"` // Passhash は dump するときに計算する
+	SubmissionIDs []int  `json:"submission_ids"`
+	Agent         *agent.Agent
 }
 
 type Team struct {
-	Name               string
-	DisplayName        string
-	LeaderName         string
-	LeaderDisplayName  string
-	Member1Name        string
-	Member1DisplayName string
-	Member2Name        string
-	Member2DisplayName string
-	Description        string
-	InvitationCode     string
+	ID             int    `json:"id"`
+	Name           string `json:"name"`
+	DisplayName    string `json:"display_name"`
+	LeaderID       int    `json:"leader_id"`
+	Member1ID      int    `json:"member1_id"`
+	Member2ID      int    `json:"member2_id"`
+	Description    string `json:"description"`
+	InvitationCode string `json:"invitation_code"`
 }
 
 type Task struct {
-	Name            string
-	DisplayName     string
-	Statement       string
-	SubmissionLimit int
-	Subtasks        []Subtask
+	ID              int       `json:"id"`
+	Name            string    `json:"name"`
+	DisplayName     string    `json:"display_name"`
+	Statement       string    `json:"statement"`
+	SubmissionLimit int       `json:"submission_limit"`
+	SubTasks        []Subtask `json:"subtasks"`
+	MaxScore        int       `json:"max_score"`
 }
 
 type Subtask struct {
-	Name        string
-	DisplayName string
-	Statement   string
-	Answers     []Answer
+	ID          int      `json:"id"`
+	Name        string   `json:"name"`
+	DisplayName string   `json:"display_name"`
+	TaskID      int      `json:"task_id"`
+	Statement   string   `json:"statement"`
+	Answers     []Answer `json:"answers"`
+	MaxScore    int      `json:"max_score"`
 }
 
 type Answer struct {
-	Answer string
-	Score  int
+	ID        int    `json:"id"`
+	TaskID    int    `json:"task_id"`
+	SubtaskID int    `json:"subtask_id"`
+	Answer    string `json:"answer"`
+	Score     int    `json:"score"`
 }
 
 type Submission struct {
-	UserName        string
-	UserDisplayName string
-	TaskName        string
-	TeamDisplayname string
-	Subtaskname     string
-	SubmittedAt     time.Time
-	Answer          string
+	ID          int       `json:"id"`
+	TaskID      int       `json:"task_id"`
+	UserID      int       `json:"user_id"`
+	SubmittedAt time.Time `json:"submitted_at"`
+	Answer      string    `json:"answer"`
+	SubTaskid   int       `json:"subtask_id"`
+	Score       int       `json:"score"`
 }
 
 func (u *User) GetAgent(o Option) (*agent.Agent, error) {
