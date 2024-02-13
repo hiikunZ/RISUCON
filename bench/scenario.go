@@ -1,12 +1,7 @@
 package bench
 
 import (
-	"context"
 	"sync"
-
-	"github.com/isucon/isucandar"
-	"github.com/isucon/isucandar/failure"
-	"github.com/isucon/isucandar/worker"
 )
 
 type Scenario struct {
@@ -16,4 +11,10 @@ type Scenario struct {
 	// 競技者が使用した言語。ポータルへのレポーティングで使用される。
 	Language string
 
+	ScenarioControlWg  sync.WaitGroup
+	SubmitCountMu      sync.Mutex
+	SubmitSuccessCount int
+
+	UserRegistrationMu    sync.Mutex
+	UserRegistrationCount int
 }

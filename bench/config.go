@@ -1,4 +1,5 @@
 package bench
+
 import (
 	"fmt"
 	"strings"
@@ -18,6 +19,10 @@ type Option struct {
 	Parallelism              int
 	PrepareOnly              bool
 }
+
+const (
+	MaxErrors = 50
+)
 
 func (o Option) String() string {
 	args := []string{
