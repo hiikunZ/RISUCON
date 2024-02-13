@@ -14,28 +14,37 @@ const (
 // benchmarker 内部で使用するモデルを集約するファイル
 type User struct {
 	mu            sync.RWMutex
-	ID            int    `json:"id"`
-	Name          string `json:"name"`
-	DisplayName   string `json:"display_name"`
-	Description   string `json:"description"`
-	Password      string `json:"password"` // Passhash は dump するときに計算する
-	SubmissionIDs []int  `json:"submission_ids"`
+	ID            int64   `json:"id"`
+	Name          string  `json:"name"`
+	DisplayName   string  `json:"display_name"`
+	Description   string  `json:"description"`
+	Password      string  `json:"password"` // Passhash は dump するときに計算する
+	SubmissionIDs []int64 `json:"submission_ids"`
+	TeamID        int64   `json:"team_id"`
 	Agent         *agent.Agent
 }
 
+func (u *User) GetID() int64 {
+	return u.ID
+}
+
 type Team struct {
-	ID             int    `json:"id"`
+	ID             int64  `json:"id"`
 	Name           string `json:"name"`
 	DisplayName    string `json:"display_name"`
-	LeaderID       int    `json:"leader_id"`
-	Member1ID      int    `json:"member1_id"`
-	Member2ID      int    `json:"member2_id"`
+	LeaderID       int64  `json:"leader_id"`
+	Member1ID      int64  `json:"member1_id"`
+	Member2ID      int64  `json:"member2_id"`
 	Description    string `json:"description"`
 	InvitationCode string `json:"invitation_code"`
 }
 
+func (t *Team) GetID() int64 {
+	return t.ID
+}
+
 type Task struct {
-	ID              int       `json:"id"`
+	ID              int64     `json:"id"`
 	Name            string    `json:"name"`
 	DisplayName     string    `json:"display_name"`
 	Statement       string    `json:"statement"`
@@ -44,31 +53,35 @@ type Task struct {
 	MaxScore        int       `json:"max_score"`
 }
 
+func (t *Task) GetID() int64 {
+	return t.ID
+}
+
 type Subtask struct {
-	ID          int      `json:"id"`
+	ID          int64    `json:"id"`
 	Name        string   `json:"name"`
 	DisplayName string   `json:"display_name"`
-	TaskID      int      `json:"task_id"`
+	TaskID      int64    `json:"task_id"`
 	Statement   string   `json:"statement"`
 	Answers     []Answer `json:"answers"`
 	MaxScore    int      `json:"max_score"`
 }
 
 type Answer struct {
-	ID        int    `json:"id"`
-	TaskID    int    `json:"task_id"`
-	SubtaskID int    `json:"subtask_id"`
+	ID        int64  `json:"id"`
+	TaskID    int64  `json:"task_id"`
+	SubtaskID int64  `json:"subtask_id"`
 	Answer    string `json:"answer"`
 	Score     int    `json:"score"`
 }
 
 type Submission struct {
-	ID          int       `json:"id"`
-	TaskID      int       `json:"task_id"`
-	UserID      int       `json:"user_id"`
+	ID          int64     `json:"id"`
+	TaskID      int64     `json:"task_id"`
+	UserID      int64     `json:"user_id"`
 	SubmittedAt time.Time `json:"submitted_at"`
 	Answer      string    `json:"answer"`
-	SubTaskid   int       `json:"subtask_id"`
+	SubTaskid   int64     `json:"subtask_id"`
 	Score       int       `json:"score"`
 }
 

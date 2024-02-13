@@ -11,6 +11,10 @@ type Scenario struct {
 	// 競技者が使用した言語。ポータルへのレポーティングで使用される。
 	Language string
 
+	Tasks Set[*Task]
+	Users Set[*User]
+	Teams Set[*Team]
+
 	ScenarioControlWg  sync.WaitGroup
 	SubmitCountMu      sync.Mutex
 	SubmitSuccessCount int

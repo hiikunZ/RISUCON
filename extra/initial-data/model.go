@@ -6,6 +6,7 @@ import (
 
 const (
 	nulluserid = -1
+	nullteamid = -1
 )
 
 type User struct {
@@ -15,6 +16,7 @@ type User struct {
 	Description   string `json:"description"`
 	Password      string `json:"password"` // Passhash は dump するときに計算する
 	SubmissionIDs []int  `json:"submission_ids"`
+	TeamID        int    `json:"team_id"`
 }
 
 type Team struct {

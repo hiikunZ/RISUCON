@@ -30,6 +30,7 @@ func main() {
 		Description:   "管理者アカウントです。",
 		Password:      "admin",
 		SubmissionIDs: []int{},
+		TeamID:        nullteamid,
 	})
 
 	// テスト用ユーザー
@@ -40,6 +41,7 @@ func main() {
 		Description:   "テスト用アカウントです。",
 		Password:      "risucon",
 		SubmissionIDs: []int{},
+		TeamID:        1,
 	})
 
 	// テスト用チーム
@@ -60,16 +62,19 @@ func main() {
 		team.ID = len(teams) + 1
 		leader := Usergen()
 		leader.ID = len(users) + 1
+		leader.TeamID = team.ID
 		users = append(users, leader)
 		team.LeaderID = leader.ID
 		if usercnt > 1 {
 			member1 := Usergen()
 			member1.ID = len(users) + 1
+			member1.TeamID = team.ID
 			users = append(users, member1)
 			team.Member1ID = member1.ID
 			if usercnt > 2 {
 				member2 := Usergen()
 				member2.ID = len(users) + 1
+				member2.TeamID = team.ID
 				users = append(users, member2)
 				team.Member2ID = member2.ID
 			}
