@@ -182,10 +182,10 @@ type TeamsStandings struct {
 	TeamDisplayName    string              `json:"team_display_name"`
 	LeaderName         string              `json:"leader_name"`
 	LeaderDisplayName  string              `json:"leader_display_name"`
-	Member1Name        string              `json:"member1_name"`
-	Member1DisplayName string              `json:"member1_display_name"`
-	Member2Name        string              `json:"member2_name"`
-	Member2DisplayName string              `json:"member2_display_name"`
+	Member1Name        string              `json:"member1_name,omitempty"`
+	Member1DisplayName string              `json:"member1_display_name,omitempty"`
+	Member2Name        string              `json:"member2_name,omitempty"`
+	Member2DisplayName string              `json:"member2_display_name,omitempty"`
 	ScoringData        []TeamsStandingsSub `json:"scoring_data"`
 	TotalScore         int                 `json:"total_score"`
 }

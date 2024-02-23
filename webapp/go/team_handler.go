@@ -180,13 +180,13 @@ type TeamResponse struct {
 	DisplayName        string `json:"display_name"`
 	LeaderName         string `json:"leader_name"`
 	LeaderDisplayName  string `json:"leader_display_name"`
-	Member1Name        string `json:"member1_name"`
-	Member1DisplayName string `json:"member1_display_name"`
-	Member2Name        string `json:"member2_name"`
-	Member2DisplayName string `json:"member2_display_name"`
+	Member1Name        string `json:"member1_name,omitempty"`
+	Member1DisplayName string `json:"member1_display_name,omitempty"`
+	Member2Name        string `json:"member2_name,omitempty"`
+	Member2DisplayName string `json:"member2_display_name,omitempty"`
 	Description        string `json:"description"`
 	SubmissionCount    int    `json:"submission_count"`
-	InvitationCode     string `json:"invitation_code"`
+	InvitationCode     string `json:"invitation_code,omitempty"`
 }
 
 // GET /api/team/:teamname
@@ -241,9 +241,6 @@ func getTeamHandler(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get submission count: "+err.Error())
 		}
 		res.SubmissionCount += membersubmissioncount
-	} else {
-		res.Member1Name = ""
-		res.Member1DisplayName = ""
 	}
 
 	if team.Member2ID != nulluserid {
@@ -260,9 +257,6 @@ func getTeamHandler(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get submission count: "+err.Error())
 		}
 		res.SubmissionCount += membersubmissioncount
-	} else {
-		res.Member2Name = ""
-		res.Member2DisplayName = ""
 	}
 
 	sess, err := session.Get(defaultSessionIDKey, c)
@@ -270,9 +264,7 @@ func getTeamHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get session: "+err.Error())
 	}
 	username, ok := sess.Values[defaultSessionUserNameKey].(string)
-	if !ok || username != res.LeaderName {
-		res.InvitationCode = ""
-	} else {
+	if ok && username == res.LeaderName {
 		res.InvitationCode = team.InvitationCode
 	}
 
