@@ -1,4 +1,4 @@
-package bench
+package main
 
 import (
 	"fmt"
@@ -6,6 +6,10 @@ import (
 	"time"
 
 	"github.com/isucon/isucandar/agent"
+)
+
+const (
+	PostLogin string = "POST /login"
 )
 
 // 起動時の設定

@@ -1,4 +1,4 @@
-package bench
+package main
 
 import (
 	"context"
@@ -34,15 +34,15 @@ func (s *Set[T]) LoadJSON(jsonFile string) error {
 	return nil
 }
 func (s *Scenario) LoadInitialData() error {
-	if err := s.Tasks.LoadJSON("./data/teams.json"); err != nil {
+	if err := s.Tasks.LoadJSON("./data/tasks.json"); err != nil {
 		ContestantLogger.Println("初期データ (tasks) のロードに失敗しました")
 		return failure.NewError(ErrFailedToLoadJson, err)
 	}
-	if err := s.Teams.LoadJSON("./data/users.json"); err != nil {
+	if err := s.Users.LoadJSON("./data/users.json"); err != nil {
 		ContestantLogger.Println("初期データ (users) のロードに失敗しました")
 		return failure.NewError(ErrFailedToLoadJson, err)
 	}
-	if err := s.Users.LoadJSON("./data/teams.json"); err != nil {
+	if err := s.Teams.LoadJSON("./data/teams.json"); err != nil {
 		ContestantLogger.Println("初期データ (teams) のロードに失敗しました")
 		return failure.NewError(ErrFailedToLoadJson, err)
 	}

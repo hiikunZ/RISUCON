@@ -1,4 +1,4 @@
-package bench
+package main
 
 import (
 	"context"
@@ -41,6 +41,7 @@ func main() {
 
 	scenario := &Scenario{
 		Option: option,
+		ConsumedUserIDs: NewLightSet(),
 	}
 
 	benchmark, err := isucandar.NewBenchmark(

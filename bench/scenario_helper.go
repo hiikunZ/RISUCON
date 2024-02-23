@@ -1,4 +1,4 @@
-package bench
+package main
 
 // scenario に使用できる便利関数をまとめておくファイル
 
@@ -85,6 +85,7 @@ func (s *Scenario) loadAdjustor(ctx context.Context, step *isucandar.BenchmarkSt
 	var prevErrors int64
 	totalSubmit := 0
 	totalRegister := 0
+	totalvisitorStandings := 0
 	for {
 		select {
 		case <-ctx.Done():
@@ -137,6 +138,14 @@ func (s *Scenario) loadAdjustor(ctx context.Context, step *isucandar.BenchmarkSt
 				userRegistrationParallels = 8
 			} else {
 				userRegistrationParallels = 16
+			}
+
+			visitorStandingsCount := s.VisitorStandingsCount
+			totalvisitorStandings += visitorStandingsCount
+			ContestantLogger.Printf("現在の観戦者数: [total: %d (+%d人)]", totalvisitorStandings, visitorStandingsCount)
+
+			if visitorStandingsCount < 50 {
+				userRegistrationCount = 1 // あとで変える
 			}
 		}
 

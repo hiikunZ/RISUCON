@@ -1,7 +1,11 @@
-package bench
+package main
 
 import (
+	"context"
 	"sync"
+
+	"github.com/isucon/isucandar"
+	"github.com/isucon/isucandar/failure"
 )
 
 type Scenario struct {
@@ -15,10 +19,77 @@ type Scenario struct {
 	Users Set[*User]
 	Teams Set[*Team]
 
-	ScenarioControlWg  sync.WaitGroup
+	ConsumedUserIDs *LightSet
+
+	ScenarioControlWg sync.WaitGroup
+
 	SubmitCountMu      sync.Mutex
 	SubmitSuccessCount int
 
 	UserRegistrationMu    sync.Mutex
 	UserRegistrationCount int
+
+	VisitorStandingsMu    sync.Mutex
+	VisitorStandingsCount int
+}
+
+// 初期化処理を行うが、初期化処理を正しく実行しているかをチェックする。
+// 初期化処理自体は `main.DefaultInitializeRequestTimeout` 秒以内に終了する必要がある。
+func (s *Scenario) Prepare(ctx context.Context, step *isucandar.BenchmarkStep) error {
+	// 初期データの読み込み
+	err := s.LoadInitialData()
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, s.Option.InitializeRequestTimeout)
+	defer cancel()
+
+	report := TimeReporter("初期化処理", s.Option)
+	defer report()
+
+	agent, err := s.Option.NewAgent(true)
+	if err != nil {
+		return failure.NewError(ErrCannotCreateNewAgent, err)
+	}
+
+	err = s.DoInitialize(ctx, step, agent)
+	if err != nil {
+		return err
+	}
+	ContestantLogger.Println("初期化処理が成功しました！")
+
+	// Pretest を1回まわす
+	if err := s.PretestScenario(ctx, step); err != nil {
+		ContestantLogger.Println("整合性チェックに失敗しました")
+		return err
+	}
+
+	ContestantLogger.Println("整合性チェックに成功しました！")
+
+	return nil
+}
+
+// 主なシナリオとしては次の通り
+// 1. 参加者シナリオ
+// 2. 観戦者シナリオ
+// 3. 運営シナリオ
+func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) error {
+	if s.Option.PrepareOnly {
+		return nil
+	}
+	ContestantLogger.Println("アプリケーションへの負荷走行を開始します")
+	// 各シナリオを走らせる。
+
+	ContestantLogger.Println("負荷走行がすべて終了しました")
+	AdminLogger.Println("負荷走行がすべて終了しました")
+
+	return nil
+}
+func (s *Scenario) Validation(ctx context.Context, step *isucandar.BenchmarkStep) error {
+	if s.Option.PrepareOnly {
+		return nil
+	}
+
+	return nil
 }

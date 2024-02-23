@@ -1,1 +1,1 @@
-package bench
+package main

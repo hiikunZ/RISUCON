@@ -1,4 +1,4 @@
-package bench
+package main
 
 // リクエストを送信する際にリクエストボディに詰める JSON を書くファイル
 

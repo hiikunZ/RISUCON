@@ -1,9 +1,3 @@
-package bench
+package main
 
-import (
-	"github.com/isucon/isucandar"
-)
-
-const (
-	
-)
+const ()

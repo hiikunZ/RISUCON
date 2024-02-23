@@ -1,4 +1,4 @@
-package bench
+package main
 
 // リクエストを送る動作 "Action" を中心に集約しているファイル
 

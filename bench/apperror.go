@@ -1,4 +1,4 @@
-package bench
+package main
 
 // エラー関係をまとめて扱うファイル。
 
