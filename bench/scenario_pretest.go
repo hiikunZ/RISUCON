@@ -70,6 +70,47 @@ func (s *Scenario) getuserValidateScenario(ctx context.Context, step *isucandar.
 	}
 }
 
+func (s *Scenario) getteamValidateScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User) error {
+	report := TimeReporter("team 取得 整合性チェック", s.Option)
+	defer report()
+
+	team, _ := s.Teams.Get(user.TeamID)
+	leader, _ := s.Users.Get(team.LeaderID)
+
+	var member1, member2 *User = nil, nil
+	if team.Member1ID != nulluserid {
+		member1, _ = s.Users.Get(team.Member1ID)
+	}
+	if team.Member2ID != nulluserid {
+		member2, _ = s.Users.Get(team.Member2ID)
+	}
+
+	agent, err := s.GetAgentFromUser(step, user)
+
+	if err != nil {
+		return err
+	}
+	getteamRes, err := GetTeamAction(ctx, agent, team.Name)
+	if err != nil {
+		return failure.NewError(ValidationErrInvalidRequest, err)
+	}
+	defer getteamRes.Body.Close()
+
+	getteamResponse := &TeamResponse{}
+
+	getteamValidation := ValidateResponse(
+		getteamRes,
+		validategetTeam(getteamResponse, team, leader, member1, member2, user.Name == leader.Name),
+	)
+	getteamValidation.Add(step)
+
+	if getteamValidation.IsEmpty() {
+		return nil
+	} else {
+		return getteamValidation
+	}
+}
+
 // ベンチ実行前の整合性検証シナリオ
 // isucandar.ValidateScenarioを満たすメソッド
 // isucandar.Benchmark の PrePare ステップで実行される
@@ -80,25 +121,38 @@ func (sc *Scenario) PretestScenario(ctx context.Context, step *isucandar.Benchma
 	ContestantLogger.Println("[PretestScenario] 整合性チェックを開始します")
 	defer ContestantLogger.Printf("[PretestScenario] 整合性チェックを終了します")
 
-	// User 取り出し
-	var user *User
-	for {
-		trial := rand.Intn(sc.Users.Len()-1) + 2 // id 1 は admin なので除外
-		if !sc.ConsumedUserIDs.Exists(int64(trial)) {
-			sc.ConsumedUserIDs.Add(int64(trial))
-			user, _ = sc.Users.Get(trial)
-			break
+	checkuserIDs := []int{2, 3, 4, 10}
+	for cnt := 0; cnt < 6; cnt++ {
+		// User 取り出し
+		var user *User
+		for {
+			var trial int
+			if cnt < 4 {
+				trial = checkuserIDs[cnt] // 仕様通りかののためなので、決め打ち
+			} else {
+				// データが消されていないかのチェックなので、ランダム
+				trial = rand.Intn(sc.Users.Len()-1) + 2 // id 1 は admin なので除外
+			}
+			if !sc.ConsumedUserIDs.Exists(int64(trial)) {
+				sc.ConsumedUserIDs.Add(int64(trial))
+				user, _ = sc.Users.Get(trial)
+				break
+			}
 		}
-	}
 
-	// 一般ユーザー
-	// ログイン
-	if err := sc.loginValidateSuccessScenario(ctx, step, user); err != nil {
-		return err
-	}
-	// user
-	if err := sc.getuserValidateScenario(ctx, step, user); err != nil {
-		return err
+		// 一般ユーザー
+		// ログイン
+		if err := sc.loginValidateSuccessScenario(ctx, step, user); err != nil {
+			return err
+		}
+		// user
+		if err := sc.getuserValidateScenario(ctx, step, user); err != nil {
+			return err
+		}
+		// team
+		if err := sc.getteamValidateScenario(ctx, step, user); err != nil {
+			return err
+		}
 	}
 	// データを登録、反映されるかチェック
 

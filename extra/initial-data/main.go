@@ -129,6 +129,7 @@ func main() {
 		submissions[i].SubmittedAt = firstsubtime.Add(time.Duration(i) * time.Second)
 		submituserid := submissions[i].UserID
 		users[submituserid-1].SubmissionIDs = append(users[submituserid-1].SubmissionIDs, i+1)
+		teams[users[submituserid-1].TeamID-1].SubmissionIDs = append(teams[users[submituserid-1].TeamID-1].SubmissionIDs, i+1)
 	}
 
 	DumpUserstoJSON(users)

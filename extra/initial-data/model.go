@@ -28,6 +28,7 @@ type Team struct {
 	Member2ID      int    `json:"member2_id"`
 	Description    string `json:"description"`
 	InvitationCode string `json:"invitation_code"`
+	SubmissionIDs  []int  `json:"submission_ids"`
 }
 
 type Task struct {
