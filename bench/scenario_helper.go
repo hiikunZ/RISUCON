@@ -78,9 +78,19 @@ func (s *Scenario) RecordUserRegistrationCount(count int) {
 	}(count)
 }
 
+func (s *Scenario) RecordVisitorStandingsCount(count int) {
+	s.ScenarioControlWg.Add(1)
+	go func(count int) {
+		defer s.ScenarioControlWg.Done()
+		s.VisitorStandingsMu.Lock()
+		defer s.VisitorStandingsMu.Unlock()
+		s.VisitorStandingsCount += count
+	}(count)
+}
+
 // ベンチマーカーの出すエラーの状況を考慮しながら、並列数などを徐々に追加していく。
 // 設定した数以上のエラーを検出すると負荷テストを打ち切るようになっている。
-func (s *Scenario) loadAdjustor(ctx context.Context, step *isucandar.BenchmarkStep, submitWorker, userRegistrationWorker *worker.Worker) {
+func (s *Scenario) loadAdjustor(ctx context.Context, step *isucandar.BenchmarkStep, submitWorker, userRegistrationWorker, visitor *worker.Worker) {
 	tk := time.NewTicker(time.Second * 10)
 	var prevErrors int64
 	totalSubmit := 0
@@ -103,7 +113,7 @@ func (s *Scenario) loadAdjustor(ctx context.Context, step *isucandar.BenchmarkSt
 			return
 		}
 
-		SubmitParallels := int32(1)
+		loginParallels := int32(1)
 		userRegistrationParallels := int32(1)
 		if diff := total - prevErrors; diff > 5 {
 			ContestantLogger.Printf("エラーが%d件増えました(現在%d件)", diff, total)
@@ -112,46 +122,21 @@ func (s *Scenario) loadAdjustor(ctx context.Context, step *isucandar.BenchmarkSt
 			totalSubmit += submitCount
 			ContestantLogger.Printf("現在の提出成功数: [total: %d (+%d人)]", totalSubmit, submitCount)
 
-			if submitCount < 50 {
-				SubmitParallels = 3
-			} else if submitCount >= 50 && submitCount < 100 {
-				SubmitParallels = 6
-			} else if submitCount >= 100 && submitCount < 200 {
-				SubmitParallels = 9
-			} else if submitCount >= 200 && submitCount < 500 {
-				SubmitParallels = 12
-			} else {
-				SubmitParallels = 15
-			}
-
 			userRegistrationCount := s.UserRegistrationCount
 			totalRegister += userRegistrationCount
 			ContestantLogger.Printf("現在のユーザー登録成功数: [total: %d (+%d人)]", totalRegister, userRegistrationCount)
-
-			if userRegistrationCount < 50 {
-				userRegistrationParallels = 1
-			} else if userRegistrationCount >= 50 && userRegistrationCount < 100 {
-				userRegistrationParallels = 2
-			} else if userRegistrationCount >= 100 && userRegistrationCount < 200 {
-				userRegistrationParallels = 4
-			} else if userRegistrationCount >= 200 && userRegistrationCount < 500 {
-				userRegistrationParallels = 8
-			} else {
-				userRegistrationParallels = 16
-			}
 
 			visitorStandingsCount := s.VisitorStandingsCount
 			totalvisitorStandings += visitorStandingsCount
 			ContestantLogger.Printf("現在の観戦者数: [total: %d (+%d人)]", totalvisitorStandings, visitorStandingsCount)
 
-			if visitorStandingsCount < 50 {
-				userRegistrationCount = 1 // あとで変える
-			}
+			// loginParallels, userRegistrationParallels を変更する
+
 		}
 
-		submitWorker.AddParallelism(SubmitParallels)
+		submitWorker.AddParallelism(loginParallels)
 		userRegistrationWorker.AddParallelism(userRegistrationParallels)
-
+		visitor.AddParallelism(userRegistrationParallels + loginParallels)
 		prevErrors = total
 	}
 }

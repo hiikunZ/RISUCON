@@ -6,6 +6,7 @@ import (
 
 	"github.com/isucon/isucandar"
 	"github.com/isucon/isucandar/failure"
+	"github.com/isucon/isucandar/worker"
 )
 
 type Scenario struct {
@@ -73,13 +74,56 @@ func (s *Scenario) Prepare(ctx context.Context, step *isucandar.BenchmarkStep) e
 // 主なシナリオとしては次の通り
 // 1. 参加者シナリオ
 // 2. 観戦者シナリオ
-// 3. 運営シナリオ
+// 3. ユーザー/チーム登録シナリオ
+// 4. 運営シナリオ
 func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) error {
 	if s.Option.PrepareOnly {
 		return nil
 	}
 	ContestantLogger.Println("アプリケーションへの負荷走行を開始します")
+
+	wg := &sync.WaitGroup{}
 	// 各シナリオを走らせる。
+	loginSuccess, err := s.NewLoginScenarioWorker(step, 1)
+	if err != nil {
+		return err
+	}
+
+	userRegistration, err := s.NewUserRegistrationScenarioWorker(step, 1)
+	if err != nil {
+		return err
+	}
+
+	visitor, err := s.NewVisitorScenarioWorker(step, 1)
+	if err != nil {
+		return err
+	}
+
+	addTask, err := s.FireAddTask(step)
+	if err != nil {
+		return err
+	}
+
+	workers := []*worker.Worker{loginSuccess, userRegistration, visitor, addTask}
+
+	for _, w := range workers {
+		wg.Add(1)
+		worker := w
+		go func() {
+			defer wg.Done()
+			worker.Process(ctx)
+		}()
+	}
+
+	// ベンチマーカー走行中の負荷調整を10秒ごとにかける
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		s.loadAdjustor(ctx, step, loginSuccess, userRegistration, visitor)
+	}()
+
+	wg.Wait()
+	s.ScenarioControlWg.Wait()
 
 	ContestantLogger.Println("負荷走行がすべて終了しました")
 	AdminLogger.Println("負荷走行がすべて終了しました")

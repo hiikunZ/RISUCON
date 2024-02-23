@@ -1,6 +1,6 @@
 package main
 
-// ログイン処理〜ガチャ成功までのシナリオを一通り管理するファイル。
+// ログイン処理〜解答提出までのシナリオを一通り管理するファイル。
 
 import (
 	"github.com/isucon/isucandar"
@@ -9,7 +9,7 @@ import (
 	"github.com/isucon/isucandar/worker"
 )
 
-func (s *Scenario) NewLoginSuccessScenarioWorker(step *isucandar.BenchmarkStep, p int32) (*worker.Worker, error) {
+func (s *Scenario) NewLoginScenarioWorker(step *isucandar.BenchmarkStep, p int32) (*worker.Worker, error) {
 	// あとで実装
 
 	return nil, nil
