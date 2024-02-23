@@ -7,8 +7,10 @@ type InitializeResponse struct {
 }
 
 type LoginResponse struct {
-	Name        string `json:"name"`
-	DisplayName string `json:"display_name"`
+	Name            string `json:"name"`
+	DisplayName     string `json:"display_name"`
+	TeamName        string `json:"team_name,omitempty"`
+	TeamDisplayName string `json:"team_display_name,omitempty"`
 }
 
 type UserResponse struct {

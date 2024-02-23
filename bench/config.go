@@ -30,6 +30,12 @@ const (
 	MaxErrors = 50
 )
 
+const (
+	ScenarioLogin            string = "ログイン"
+	ScenarioUserRegistration string = "新規ユーザー登録"
+	ScenarioVisitor          string = "観戦"
+)
+
 func (o Option) String() string {
 	args := []string{
 		"benchmarker",
@@ -37,7 +43,7 @@ func (o Option) String() string {
 		fmt.Sprintf("--request-timeout=%s", o.RequestTimeout.String()),
 		fmt.Sprintf("--initialize-request-timeout=%s", o.InitializeRequestTimeout.String()),
 		fmt.Sprintf("--exit-error-on-fail=%v", o.ExitErrorOnFail),
-		// fmt.Sprintf("--stage=%s", o.Stage),
+		fmt.Sprintf("--stage=%s", o.Stage),
 		// fmt.Sprintf("--max-parallelism=%d", o.Parallelism),
 		// fmt.Sprintf("--prepare-only=%v", o.PrepareOnly),
 	}

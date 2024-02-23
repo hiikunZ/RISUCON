@@ -9,18 +9,19 @@ import (
 
 const (
 	nulluserid = -1
+	nullteamid = -1
 )
 
 // benchmarker 内部で使用するモデルを集約するファイル
 type User struct {
 	mu            sync.RWMutex
-	ID            int   `json:"id"`
-	Name          string  `json:"name"`
-	DisplayName   string  `json:"display_name"`
-	Description   string  `json:"description"`
-	Password      string  `json:"password"` // Passhash は dump するときに計算する
-	SubmissionIDs []int `json:"submission_ids"`
-	TeamID        int   `json:"team_id"`
+	ID            int    `json:"id"`
+	Name          string `json:"name"`
+	DisplayName   string `json:"display_name"`
+	Description   string `json:"description"`
+	Password      string `json:"password"` // Passhash は dump するときに計算する
+	SubmissionIDs []int  `json:"submission_ids"`
+	TeamID        int    `json:"team_id"`
 	Agent         *agent.Agent
 }
 
@@ -29,15 +30,15 @@ func (u *User) GetID() int {
 }
 
 type Team struct {
-	ID             int  `json:"id"`
+	ID             int    `json:"id"`
 	Name           string `json:"name"`
 	DisplayName    string `json:"display_name"`
-	LeaderID       int  `json:"leader_id"`
-	Member1ID      int  `json:"member1_id"`
-	Member2ID      int  `json:"member2_id"`
+	LeaderID       int    `json:"leader_id"`
+	Member1ID      int    `json:"member1_id"`
+	Member2ID      int    `json:"member2_id"`
 	Description    string `json:"description"`
 	InvitationCode string `json:"invitation_code"`
-	SubmissionIDs  []int `json:"submission_ids"`
+	SubmissionIDs  []int  `json:"submission_ids"`
 }
 
 func (t *Team) GetID() int {
@@ -45,7 +46,7 @@ func (t *Team) GetID() int {
 }
 
 type Task struct {
-	ID              int     `json:"id"`
+	ID              int       `json:"id"`
 	Name            string    `json:"name"`
 	DisplayName     string    `json:"display_name"`
 	Statement       string    `json:"statement"`

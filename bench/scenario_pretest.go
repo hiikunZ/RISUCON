@@ -12,6 +12,12 @@ func (s *Scenario) loginValidateSuccessScenario(ctx context.Context, step *isuca
 	report := TimeReporter("ログイン成功 整合性チェック", s.Option)
 	defer report()
 
+	var team *Team = nil
+
+	if user.TeamID != nullteamid {
+		team, _ = s.Teams.Get(user.TeamID)
+	}
+
 	agent, err := s.GetAgentFromUser(step, user)
 
 	if err != nil {
@@ -27,7 +33,7 @@ func (s *Scenario) loginValidateSuccessScenario(ctx context.Context, step *isuca
 
 	loginValidation := ValidateResponse(
 		loginRes,
-		validateLoginUser(loginResponse, user),
+		validateLoginUser(loginResponse, user, team),
 	)
 	loginValidation.Add(step)
 
@@ -42,7 +48,11 @@ func (s *Scenario) getuserValidateScenario(ctx context.Context, step *isucandar.
 	report := TimeReporter("user 取得 整合性チェック", s.Option)
 	defer report()
 
-	team, _ := s.Teams.Get(user.TeamID)
+	var team *Team = nil
+
+	if user.TeamID != nullteamid {
+		team, _ = s.Teams.Get(user.TeamID)
+	}
 
 	agent, err := s.GetAgentFromUser(step, user)
 
@@ -71,6 +81,10 @@ func (s *Scenario) getuserValidateScenario(ctx context.Context, step *isucandar.
 }
 
 func (s *Scenario) getteamValidateScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User) error {
+	if user.TeamID == nullteamid {
+		return nil
+	}
+
 	report := TimeReporter("team 取得 整合性チェック", s.Option)
 	defer report()
 
@@ -127,7 +141,7 @@ func (sc *Scenario) PretestScenario(ctx context.Context, step *isucandar.Benchma
 		var user *User
 		for {
 			var trial int
-			if cnt < 4 {
+			if cnt < 3 {
 				trial = checkuserIDs[cnt] // 仕様通りかののためなので、決め打ち
 			} else {
 				// データが消されていないかのチェックなので、ランダム
