@@ -95,8 +95,10 @@ type LoginRequest struct {
 }
 
 type LoginResponse struct {
-	Name        string `json:"name"`
-	DisplayName string `json:"display_name"`
+	Name            string `json:"name"`
+	DisplayName     string `json:"display_name"`
+	TeamName        string `json:"team_name,omitempty"`
+	TeamDisplayName string `json:"team_display_name,omitempty"`
 }
 
 // POST /api/login
@@ -132,6 +134,15 @@ func loginHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "authentication failed")
 	}
 
+	team := Team{}
+	teamfound := false
+	err = tx.GetContext(ctx, &team, "SELECT teams.* FROM teams JOIN users ON leader_id = users.id OR member1_id = users.id OR member2_id = users.id WHERE users.name = ?", req.Name)
+	if err != nil && err != sql.ErrNoRows {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get team info: "+err.Error())
+	} else if err == nil {
+		teamfound = true
+	}
+
 	sess, err := session.Get(defaultSessionIDKey, c)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get session: "+err.Error())
@@ -148,11 +159,19 @@ func loginHandler(c echo.Context) error {
 	if err := tx.Commit(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit transaction: "+err.Error())
 	}
-
-	return c.JSON(http.StatusOK, LoginResponse{
-		Name:        usr.Name,
-		DisplayName: usr.DisplayName,
-	})
+	if teamfound {
+		return c.JSON(http.StatusOK, LoginResponse{
+			Name:        usr.Name,
+			DisplayName: usr.DisplayName,
+			TeamName:    team.Name,
+			TeamDisplayName: team.DisplayName,
+		})
+	} else {
+		return c.JSON(http.StatusOK, LoginResponse{
+			Name:        usr.Name,
+			DisplayName: usr.DisplayName,
+		})
+	}
 }
 
 // POST /api/logout
@@ -216,13 +235,9 @@ func getUserHandler(c echo.Context) error {
 	team := Team{}
 
 	err = tx.GetContext(c.Request().Context(), &team, "SELECT teams.* FROM teams JOIN users ON leader_id = users.id OR member1_id = users.id OR member2_id = users.id WHERE users.name = ?", username)
-	if err == sql.ErrNoRows {
-		// 空文字列を返せばフロントエンドがいい感じに処理してくれる
-		res.TeamName = ""
-		res.TeamDisplayName = ""
-	} else if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get team info: "+err.Error())
-	} else {
+	} else if err == nil {
 		res.TeamName = team.Name
 		res.TeamDisplayName = team.DisplayName
 	}
