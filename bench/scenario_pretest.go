@@ -121,8 +121,8 @@ func (sc *Scenario) PretestScenario(ctx context.Context, step *isucandar.Benchma
 	ContestantLogger.Println("[PretestScenario] 整合性チェックを開始します")
 	defer ContestantLogger.Printf("[PretestScenario] 整合性チェックを終了します")
 
-	checkuserIDs := []int{2, 3, 4, 10}
-	for cnt := 0; cnt < 6; cnt++ {
+	checkuserIDs := []int{2, 4, 10}
+	for cnt := 0; cnt < 4; cnt++ {
 		// User 取り出し
 		var user *User
 		for {
@@ -153,12 +153,38 @@ func (sc *Scenario) PretestScenario(ctx context.Context, step *isucandar.Benchma
 		if err := sc.getteamValidateScenario(ctx, step, user); err != nil {
 			return err
 		}
+		// submit
+		// submission
+		// submission 検索
+		// logout
+		sc.ConsumedUserIDs.Remove(int64(user.ID))
 	}
-	// データを登録、反映されるかチェック
+	// 情報がこわれてないか
+	// 非ログインユーザー
+	// tasks
+	// task
+	// standings
+	// submission が見れないことを確認
 
 	// Admin 取り出し
 
-	// etc...
+	// createtask
+	// 反映されているかのチェック
+	// tasks
+	// task
+	// submission (admin)
+	// submission 検索 (admin)
+
+	// ユーザー、チームの新規作成
+	// register (もう存在するユーザーで失敗)
+	// register
+	// login (名前の typo で失敗)
+	// login (パスワードの typo で失敗)
+	// create
+	// join (一杯のチームに入れないことを確認)
+	// join
+	// もうチームに所属しているのに create できないことを確認
+	// もうチームに所属しているのに join できないことを確認
 
 	return nil
 }
