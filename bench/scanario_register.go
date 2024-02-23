@@ -12,6 +12,8 @@ import (
 func (s *Scenario) NewUserRegistrationScenarioWorker(step *isucandar.BenchmarkStep, p int32) (*worker.Worker, error) {
 	// あとで実装
 	userRegistration, err := worker.NewWorker(func(ctx context.Context, _ int) {
+		PrintScenarioStarted(ScenarioUserRegistration)
+		defer PrintScenarioFinished(ScenarioUserRegistration)
 		// チーム内の人数を決めて、その人数分 register
 		// createteam
 		// join
