@@ -53,6 +53,7 @@ func (s *Scenario) LoadInitialData() error {
 func (s *Scenario) DoInitialize(ctx context.Context, step *isucandar.BenchmarkStep, agent *agent.Agent) error {
 	res, err := PostInitializeAction(ctx, agent)
 	if err != nil {
+		ContestantLogger.Printf("初期化リクエストに失敗しました")
 		return failure.NewError(ErrPrepareInvalidRequest, err)
 	}
 	defer res.Body.Close()

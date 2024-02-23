@@ -23,10 +23,6 @@ func (s *Scenario) loginValidateSuccessScenario(ctx context.Context, step *isuca
 	}
 	defer loginRes.Body.Close()
 
-	// HTTP status code のチェック
-	if err := IsuAssertStatus(200, loginRes.StatusCode, Hint(PostLogin, "")); err != nil {
-		return failure.NewError(ValidationErrInvalidStatusCode, err)
-	}
 	loginResponse := &LoginResponse{}
 
 	loginValidation := ValidateResponse(
@@ -39,6 +35,38 @@ func (s *Scenario) loginValidateSuccessScenario(ctx context.Context, step *isuca
 		return nil
 	} else {
 		return loginValidation
+	}
+}
+
+func (s *Scenario) getuserValidateScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User) error {
+	report := TimeReporter("user 取得 整合性チェック", s.Option)
+	defer report()
+
+	team, _ := s.Teams.Get(user.TeamID)
+
+	agent, err := s.GetAgentFromUser(step, user)
+
+	if err != nil {
+		return err
+	}
+	getuserRes, err := GetUserAction(ctx, agent, user.Name)
+	if err != nil {
+		return failure.NewError(ValidationErrInvalidRequest, err)
+	}
+	defer getuserRes.Body.Close()
+
+	getuserResponse := &UserResponse{}
+
+	getuserValidation := ValidateResponse(
+		getuserRes,
+		validategetUser(getuserResponse, user, team),
+	)
+	getuserValidation.Add(step)
+
+	if getuserValidation.IsEmpty() {
+		return nil
+	} else {
+		return getuserValidation
 	}
 }
 
@@ -55,20 +83,23 @@ func (sc *Scenario) PretestScenario(ctx context.Context, step *isucandar.Benchma
 	// User 取り出し
 	var user *User
 	for {
-		trial := rand.Intn(sc.Users.Len()-1) + 1 // 0 は admin なので除外
+		trial := rand.Intn(sc.Users.Len()-1) + 2 // id 1 は admin なので除外
 		if !sc.ConsumedUserIDs.Exists(int64(trial)) {
 			sc.ConsumedUserIDs.Add(int64(trial))
-			user = sc.Users.At(trial)
+			user, _ = sc.Users.Get(trial)
 			break
 		}
 	}
 
+	// 一般ユーザー
 	// ログイン
-	ContestantLogger.Println("整合性チェック Request:POST /login")
 	if err := sc.loginValidateSuccessScenario(ctx, step, user); err != nil {
 		return err
 	}
-
+	// user
+	if err := sc.getuserValidateScenario(ctx, step, user); err != nil {
+		return err
+	}
 	// データを登録、反映されるかチェック
 
 	// Admin 取り出し

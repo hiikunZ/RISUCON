@@ -14,37 +14,37 @@ const (
 // benchmarker 内部で使用するモデルを集約するファイル
 type User struct {
 	mu            sync.RWMutex
-	ID            int64   `json:"id"`
+	ID            int   `json:"id"`
 	Name          string  `json:"name"`
 	DisplayName   string  `json:"display_name"`
 	Description   string  `json:"description"`
 	Password      string  `json:"password"` // Passhash は dump するときに計算する
-	SubmissionIDs []int64 `json:"submission_ids"`
-	TeamID        int64   `json:"team_id"`
+	SubmissionIDs []int `json:"submission_ids"`
+	TeamID        int   `json:"team_id"`
 	Agent         *agent.Agent
 }
 
-func (u *User) GetID() int64 {
+func (u *User) GetID() int {
 	return u.ID
 }
 
 type Team struct {
-	ID             int64  `json:"id"`
+	ID             int  `json:"id"`
 	Name           string `json:"name"`
 	DisplayName    string `json:"display_name"`
-	LeaderID       int64  `json:"leader_id"`
-	Member1ID      int64  `json:"member1_id"`
-	Member2ID      int64  `json:"member2_id"`
+	LeaderID       int  `json:"leader_id"`
+	Member1ID      int  `json:"member1_id"`
+	Member2ID      int  `json:"member2_id"`
 	Description    string `json:"description"`
 	InvitationCode string `json:"invitation_code"`
 }
 
-func (t *Team) GetID() int64 {
+func (t *Team) GetID() int {
 	return t.ID
 }
 
 type Task struct {
-	ID              int64     `json:"id"`
+	ID              int     `json:"id"`
 	Name            string    `json:"name"`
 	DisplayName     string    `json:"display_name"`
 	Statement       string    `json:"statement"`
@@ -53,7 +53,7 @@ type Task struct {
 	MaxScore        int       `json:"max_score"`
 }
 
-func (t *Task) GetID() int64 {
+func (t *Task) GetID() int {
 	return t.ID
 }
 

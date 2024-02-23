@@ -5,7 +5,7 @@ import (
 )
 
 type Model interface {
-	GetID() int64
+	GetID() int
 }
 
 type Set[T Model] struct {

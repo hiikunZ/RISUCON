@@ -9,7 +9,9 @@ import (
 )
 
 const (
-	PostLogin string = "POST /login"
+	PostLogin string = "POST /api/login"
+	GetUser   string = "GET /api/user/:username"
+	Getteam   string = "GET /api/team/:teamname"
 )
 
 // 起動時の設定
