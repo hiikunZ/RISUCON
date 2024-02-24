@@ -107,6 +107,11 @@ type JoinTeamRequest struct {
 	InvitationCode string `json:"invitation_code"`
 }
 
+type JoinTeamResponse struct {
+	TeamName        string `json:"team_name"`
+	TeamDisplayName string `json:"team_display_name"`
+}
+
 // POST /api/team/join
 func joinTeamHandler(c echo.Context) error {
 	ctx := c.Request().Context()
@@ -172,7 +177,10 @@ func joinTeamHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit transaction: "+err.Error())
 	}
 
-	return c.NoContent(http.StatusOK)
+	return c.JSON(http.StatusOK, JoinTeamResponse{
+		TeamName:        team.Name,
+		TeamDisplayName: team.DisplayName,
+	})
 }
 
 type TeamResponse struct {
