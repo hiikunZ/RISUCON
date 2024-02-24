@@ -6,7 +6,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/isucon/isucandar/agent"
 )
@@ -172,22 +174,32 @@ func PostSubmitAction(ctx context.Context, agent *agent.Agent, taskname string, 
 
 // GET /api/submissions
 func GetSubmissionsAction(ctx context.Context, agent *agent.Agent, page int, username string, teamname string, taskname string, subtaskname string, answerfilter string) (*http.Response, error) {
-	url := "/api/submissions?page=" + string(page)
+	url := "/api/submissions"
+	param := []string{}
+
+	if page != 1 {
+		param = append(param, fmt.Sprintf("page=%d", page))
+	}
 	if username != "" {
-		url += "&user_name=" + username
+		param = append(param, fmt.Sprintf("user_name=%s", username))
 	}
 	if teamname != "" {
-		url += "&team_name=" + teamname
+		param = append(param, fmt.Sprintf("team_name=%s", teamname))
 	}
 	if taskname != "" {
-		url += "&task_name=" + taskname
+		param = append(param, fmt.Sprintf("task_name=%s", taskname))
 	}
 	if subtaskname != "" {
-		url += "&subtask_name=" + subtaskname
+		param = append(param, fmt.Sprintf("subtask_name=%s", subtaskname))
 	}
 	if answerfilter != "" {
-		url += "&filter=" + answerfilter
+		param = append(param, fmt.Sprintf("filter=%s", answerfilter))
 	}
+
+	if len(param) > 0 {
+		url += "?" + strings.Join(param, "&")
+	}
+
 	req, err := agent.GET(url)
 	if err != nil {
 		return nil, err
