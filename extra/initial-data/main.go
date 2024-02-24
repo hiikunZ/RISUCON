@@ -10,6 +10,7 @@ const (
 	SubmissionPerUser = 3
 	validanswerprob   = 0.8
 	defaulttasksfile  = "default_tasks.json"
+	maxtaskcnt        = 6
 )
 
 var (
@@ -55,6 +56,7 @@ func main() {
 		Description:    "テスト用チームです。",
 		InvitationCode: "72697375636f6e21",
 	})
+	teams[0].SubmissionCounts = make([]int, maxtaskcnt)
 
 	for i := 0; i < TeamCount; i++ {
 		usercnt := rng.Intn(3) + 1
@@ -65,6 +67,8 @@ func main() {
 		leader.TeamID = team.ID
 		users = append(users, leader)
 		team.LeaderID = leader.ID
+		team.SubmissionCounts = make([]int, maxtaskcnt)
+
 		if usercnt > 1 {
 			member1 := Usergen()
 			member1.ID = len(users) + 1
@@ -130,6 +134,7 @@ func main() {
 		submituserid := submissions[i].UserID
 		users[submituserid-1].SubmissionIDs = append(users[submituserid-1].SubmissionIDs, i+1)
 		teams[users[submituserid-1].TeamID-1].SubmissionIDs = append(teams[users[submituserid-1].TeamID-1].SubmissionIDs, i+1)
+		teams[users[submituserid-1].TeamID-1].SubmissionCounts[submissions[i].TaskID-1]++
 	}
 
 	DumpUserstoJSON(users)

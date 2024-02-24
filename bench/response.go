@@ -35,3 +35,21 @@ type TeamResponse struct {
 	SubmissionCount    int    `json:"submission_count"`
 	InvitationCode     string `json:"invitation_code,omitempty"`
 }
+
+type TaskAbstract struct {
+	Name            string `json:"name"`
+	DisplayName     string `json:"display_name"`
+	MaxScore        int    `json:"max_score"`
+	Score           int    `json:"score,omitempty"`
+	SubmissionLimit int    `json:"submission_limit,omitempty"`
+	SubmissionCount int    `json:"submission_count,omitempty"`
+}
+
+type SubmitResponse struct {
+	IsScored             bool   `json:"is_scored"`
+	Score                int    `json:"score"`
+	SubtaskName          string `json:"subtask_name"`
+	SubTaskDisplayName   string `json:"subtask_display_name"`
+	SubTaskMaxScore      int    `json:"subtask_max_score"`
+	RemainingSubmissions int    `json:"remaining_submissions"`
+}

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/isucon/isucandar"
 	"github.com/isucon/isucandar/failure"
@@ -16,22 +17,27 @@ type Scenario struct {
 	// 競技者が使用した言語。ポータルへのレポーティングで使用される。
 	Language string
 
-	Tasks Set[*Task]
-	Users Set[*User]
-	Teams Set[*Team]
+	Prepared_Tasks Set[*Task]
+
+	Tasks       Set[*Task]
+	Users       Set[*User]
+	Teams       Set[*Team]
+	Submissions Set[*Submission]
 
 	ConsumedUserIDs *LightSet
 
 	ScenarioControlWg sync.WaitGroup
 
-	SubmitCountMu      sync.Mutex
-	SubmitSuccessCount int
+	LoginSuccessCountMu sync.Mutex
+	LoginSuccessCount   int
 
 	UserRegistrationMu    sync.Mutex
 	UserRegistrationCount int
 
 	VisitorStandingsMu    sync.Mutex
 	VisitorStandingsCount int
+
+	NowClock time.Time
 }
 
 // 初期化処理を行うが、初期化処理を正しく実行しているかをチェックする。

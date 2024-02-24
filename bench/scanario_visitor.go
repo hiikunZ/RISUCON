@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"time"
 
 	"github.com/isucon/isucandar"
 	"github.com/isucon/isucandar/worker"
@@ -14,6 +15,7 @@ func (s *Scenario) NewVisitorScenarioWorker(step *isucandar.BenchmarkStep, p int
 	visitor, err := worker.NewWorker(func(ctx context.Context, _ int) {
 		PrintScenarioStarted(ScenarioVisitor)
 		defer PrintScenarioFinished(ScenarioVisitor)
+		time.Sleep(1 * time.Second)
 
 		// tasks (確率的に)
 		// task (確率的に)

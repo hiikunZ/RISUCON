@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/isucon/isucandar/agent"
+	"github.com/isucon/isucandar/score"
 )
 
 const (
@@ -34,6 +35,10 @@ const (
 	ScenarioLogin            string = "ログイン"
 	ScenarioUserRegistration string = "新規ユーザー登録"
 	ScenarioVisitor          string = "観戦"
+)
+
+const (
+	ScoreSubmission score.ScoreTag = "提出成功"
 )
 
 func (o Option) String() string {

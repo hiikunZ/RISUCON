@@ -34,10 +34,16 @@ func (s *Set[T]) LoadJSON(jsonFile string) error {
 	return nil
 }
 func (s *Scenario) LoadInitialData() error {
-	if err := s.Tasks.LoadJSON("./data/tasks.json"); err != nil {
+	if err := s.Prepared_Tasks.LoadJSON("./data/tasks.json"); err != nil {
 		ContestantLogger.Println("初期データ (tasks) のロードに失敗しました")
 		return failure.NewError(ErrFailedToLoadJson, err)
 	}
+
+	for i := 1; i <= 2; i++ {
+		task, _ := s.Prepared_Tasks.Get(i)
+		s.Tasks.Add(task)
+	}
+
 	if err := s.Users.LoadJSON("./data/users.json"); err != nil {
 		ContestantLogger.Println("初期データ (users) のロードに失敗しました")
 		return failure.NewError(ErrFailedToLoadJson, err)
@@ -46,6 +52,11 @@ func (s *Scenario) LoadInitialData() error {
 		ContestantLogger.Println("初期データ (teams) のロードに失敗しました")
 		return failure.NewError(ErrFailedToLoadJson, err)
 	}
+	if err := s.Submissions.LoadJSON("./data/submissions.json"); err != nil {
+		ContestantLogger.Println("初期データ (submissions) のロードに失敗しました")
+		return failure.NewError(ErrFailedToLoadJson, err)
+	}
+
 	return nil
 }
 

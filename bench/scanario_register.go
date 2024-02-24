@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"time"
 
 	"github.com/isucon/isucandar"
 	"github.com/isucon/isucandar/worker"
@@ -14,6 +15,7 @@ func (s *Scenario) NewUserRegistrationScenarioWorker(step *isucandar.BenchmarkSt
 	userRegistration, err := worker.NewWorker(func(ctx context.Context, _ int) {
 		PrintScenarioStarted(ScenarioUserRegistration)
 		defer PrintScenarioFinished(ScenarioUserRegistration)
+		time.Sleep(1 * time.Second)
 		// チーム内の人数を決めて、その人数分 register
 		// createteam
 		// join

@@ -30,15 +30,17 @@ func (u *User) GetID() int {
 }
 
 type Team struct {
-	ID             int    `json:"id"`
-	Name           string `json:"name"`
-	DisplayName    string `json:"display_name"`
-	LeaderID       int    `json:"leader_id"`
-	Member1ID      int    `json:"member1_id"`
-	Member2ID      int    `json:"member2_id"`
-	Description    string `json:"description"`
-	InvitationCode string `json:"invitation_code"`
-	SubmissionIDs  []int  `json:"submission_ids"`
+	mu               sync.RWMutex
+	ID               int    `json:"id"`
+	Name             string `json:"name"`
+	DisplayName      string `json:"display_name"`
+	LeaderID         int    `json:"leader_id"`
+	Member1ID        int    `json:"member1_id"`
+	Member2ID        int    `json:"member2_id"`
+	Description      string `json:"description"`
+	InvitationCode   string `json:"invitation_code"`
+	SubmissionIDs    []int  `json:"submission_ids"`
+	SubmissionCounts []int  `json:"submission_counts"`
 }
 
 func (t *Team) GetID() int {
@@ -60,31 +62,35 @@ func (t *Task) GetID() int {
 }
 
 type Subtask struct {
-	ID          int64    `json:"id"`
+	ID          int    `json:"id"`
 	Name        string   `json:"name"`
 	DisplayName string   `json:"display_name"`
-	TaskID      int64    `json:"task_id"`
+	TaskID      int    `json:"task_id"`
 	Statement   string   `json:"statement"`
 	Answers     []Answer `json:"answers"`
 	MaxScore    int      `json:"max_score"`
 }
 
 type Answer struct {
-	ID        int64  `json:"id"`
-	TaskID    int64  `json:"task_id"`
-	SubtaskID int64  `json:"subtask_id"`
+	ID        int  `json:"id"`
+	TaskID    int  `json:"task_id"`
+	SubtaskID int  `json:"subtask_id"`
 	Answer    string `json:"answer"`
 	Score     int    `json:"score"`
 }
 
 type Submission struct {
-	ID          int64     `json:"id"`
-	TaskID      int64     `json:"task_id"`
-	UserID      int64     `json:"user_id"`
+	ID          int     `json:"id"`
+	TaskID      int     `json:"task_id"`
+	UserID      int     `json:"user_id"`
 	SubmittedAt time.Time `json:"submitted_at"`
 	Answer      string    `json:"answer"`
-	SubTaskid   int64     `json:"subtask_id"`
+	SubTaskID   int     `json:"subtask_id"`
 	Score       int       `json:"score"`
+}
+
+func (s *Submission) GetID() int {
+	return s.ID
 }
 
 func (u *User) GetAgent(o Option) (*agent.Agent, error) {

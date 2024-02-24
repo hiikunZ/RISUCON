@@ -62,9 +62,9 @@ func (s *Scenario) RecordLoginSuccessCount(count int) {
 	s.ScenarioControlWg.Add(1)
 	go func(count int) {
 		defer s.ScenarioControlWg.Done()
-		s.SubmitCountMu.Lock()
-		defer s.SubmitCountMu.Unlock()
-		s.SubmitSuccessCount += count
+		s.LoginSuccessCountMu.Lock()
+		defer s.LoginSuccessCountMu.Unlock()
+		s.LoginSuccessCount += count
 	}(count)
 }
 
@@ -93,9 +93,9 @@ func (s *Scenario) RecordVisitorStandingsCount(count int) {
 func (s *Scenario) loadAdjustor(ctx context.Context, step *isucandar.BenchmarkStep, submitWorker, userRegistrationWorker, visitor *worker.Worker) {
 	tk := time.NewTicker(time.Second * 10)
 	var prevErrors int64
-	totalSubmit := 0
-	totalRegister := 0
-	totalvisitorStandings := 0
+	activeuserCount := 0
+	userRegistrationCount := 0
+	visitorStandingsCount := 0
 	for {
 		select {
 		case <-ctx.Done():
@@ -118,16 +118,16 @@ func (s *Scenario) loadAdjustor(ctx context.Context, step *isucandar.BenchmarkSt
 		if diff := total - prevErrors; diff > 5 {
 			ContestantLogger.Printf("エラーが%d件増えました(現在%d件)", diff, total)
 		} else {
-			submitCount := s.SubmitSuccessCount
-			totalSubmit += submitCount
-			ContestantLogger.Printf("現在の提出成功数: [total: %d (+%d人)]", totalSubmit, submitCount)
+			totalActiveUser := s.LoginSuccessCount
+			activeuserCount = totalActiveUser - activeuserCount
+			ContestantLogger.Printf("現在のアクティブユーザー数: [total: %d (+%d人)]", totalActiveUser, activeuserCount)
 
-			userRegistrationCount := s.UserRegistrationCount
-			totalRegister += userRegistrationCount
+			totalRegister := s.UserRegistrationCount
+			userRegistrationCount = totalRegister - userRegistrationCount
 			ContestantLogger.Printf("現在のユーザー登録成功数: [total: %d (+%d人)]", totalRegister, userRegistrationCount)
 
-			visitorStandingsCount := s.VisitorStandingsCount
-			totalvisitorStandings += visitorStandingsCount
+			totalvisitorStandings := s.VisitorStandingsCount
+			visitorStandingsCount = totalvisitorStandings - visitorStandingsCount
 			ContestantLogger.Printf("現在の観戦者数: [total: %d (+%d人)]", totalvisitorStandings, visitorStandingsCount)
 
 			// loginParallels, userRegistrationParallels を変更する

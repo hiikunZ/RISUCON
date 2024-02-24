@@ -22,6 +22,22 @@ func init() {
 	failure.BacktraceCleaner.Add(failure.SkipGOROOT)
 }
 
+type errorSummary struct {
+	initializeError []error
+	scenarioError   []error
+	validationError []error
+	internalError   []error
+	unexpectedError []error
+}
+
+func (e errorSummary) containsFatal() bool {
+	return len(e.internalError) != 0 || len(e.unexpectedError) != 0 || len(e.initializeError) != 0 || len(e.validationError) != 0
+}
+
+func (e errorSummary) containsError() bool {
+	return e.containsFatal() || len(e.scenarioError) != 0 || len(e.internalError) != 0 || len(e.validationError) != 0 || len(e.unexpectedError) != 0
+}
+
 func main() {
 	option := Option{}
 
@@ -35,9 +51,11 @@ func main() {
 
 	AdminLogger.Print(option)
 
+	time.Local = time.FixedZone("Asia/Tokyo", 9*60*60) // JST
 	scenario := &Scenario{
 		Option:          option,
 		ConsumedUserIDs: NewLightSet(),
+		NowClock:        time.Date(2024, 3, 28, 9, 0, 0, 0, time.Local),
 	}
 
 	benchmark, err := isucandar.NewBenchmark(
@@ -58,6 +76,7 @@ func main() {
 	// 結果の集計のために少し待つ
 	result.Errors.Wait()
 	time.Sleep(3 * time.Second)
+	
 
 	for _, err := range result.Errors.All() {
 		ContestantLogger.Printf("%v", err)
@@ -85,6 +104,7 @@ func SumScore(result *isucandar.BenchmarkResult) int64 {
 		score.Set(ScorePOSTLogin, 2)
 		score.Set(ScorePOSTRoot, 5)
 	*/
+	score.Set(ScoreSubmission, 1)
 
 	addition := score.Sum()
 

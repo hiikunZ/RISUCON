@@ -20,15 +20,16 @@ type User struct {
 }
 
 type Team struct {
-	ID             int    `json:"id"`
-	Name           string `json:"name"`
-	DisplayName    string `json:"display_name"`
-	LeaderID       int    `json:"leader_id"`
-	Member1ID      int    `json:"member1_id"`
-	Member2ID      int    `json:"member2_id"`
-	Description    string `json:"description"`
-	InvitationCode string `json:"invitation_code"`
-	SubmissionIDs  []int  `json:"submission_ids"`
+	ID               int    `json:"id"`
+	Name             string `json:"name"`
+	DisplayName      string `json:"display_name"`
+	LeaderID         int    `json:"leader_id"`
+	Member1ID        int    `json:"member1_id"`
+	Member2ID        int    `json:"member2_id"`
+	Description      string `json:"description"`
+	InvitationCode   string `json:"invitation_code"`
+	SubmissionIDs    []int  `json:"submission_ids"`
+	SubmissionCounts []int  `json:"submission_counts"`
 }
 
 type Task struct {
