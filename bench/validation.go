@@ -161,7 +161,7 @@ func makeInconsistentMsg[T any](expected, actual T, b func() ValidationHint) err
 
 func makeInconsistentStatusCode(expected, actual int, b func() ValidationHint) error {
 	return fmt.Errorf(
-		"%v : expected(%v) != actual(%v)", fmt.Sprintf("%s の Response の　HTTP Status Code が違います", b().endpoint), expected, actual,
+		"%v : expected(%v) != actual(%v)", fmt.Sprintf("%s の Response の HTTP Status Code が違います", b().endpoint), expected, actual,
 	)
 }
 

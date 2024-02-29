@@ -34,8 +34,8 @@ type Scenario struct {
 	UserRegistrationMu    sync.Mutex
 	UserRegistrationCount int
 
-	VisitorStandingsMu    sync.Mutex
-	VisitorStandingsCount int
+	VisitorMu    sync.Mutex
+	VisitorCount int
 
 	NowClock time.Time
 }

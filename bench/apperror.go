@@ -90,5 +90,7 @@ func AddErrorIfNotCanceled(step *isucandar.BenchmarkStep, err error) {
 	if failure.Is(err, context.Canceled) || failure.Is(err, context.DeadlineExceeded) {
 		return
 	}
+	AdminLogger.Printf("[ERROR] %v", err)
+	
 	step.AddError(err)
 }

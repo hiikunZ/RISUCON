@@ -58,50 +58,31 @@ func (s *Scenario) NewLoginScenarioWorker(step *isucandar.BenchmarkStep, p int32
 
 		team, _ := s.Teams.Get(user.TeamID)
 
-	Rewind:
 		// ログイン
-		result, ok := s.LoginSuccessScenario(ctx, step, user)
+		ok := s.LoginSuccessScenario(ctx, step, user)
 		if !ok {
 			return
 		}
-		if result.Rewind {
-			goto Rewind
-		}
 		// user / team 取得 (確率的)
 		if rand.Float64() < 0.2 {
-			result = s.GetUserSuccessScenario(ctx, step, user)
-			if result.Rewind {
-				goto Rewind
-			}
+			s.GetUserSuccessScenario(ctx, step, user)
 		}
 		if rand.Float64() < 0.2 {
-			result = s.GetTeamSuccessScenario(ctx, step, user, team.Name)
-			if result.Rewind {
-				goto Rewind
-			}
+			s.GetTeamSuccessScenario(ctx, step, user, team.Name)
 		}
 		// 以下、何回かやる
 		tasksubmitcnt := rand.Intn(3) + 1
 		for i := 0; i < tasksubmitcnt; i++ {
 			// tasks
-			result = s.GetTasksSuccessScenario(ctx, step, user)
-			if result.Rewind {
-				goto Rewind
-			}
+			s.GetTasksSuccessScenario(ctx, step, user)
 			// task
 
 			task := s.ChooseTask(team)
-			result = s.GetTaskSuccessScenario(ctx, step, user, team, task)
-			if result.Rewind {
-				goto Rewind
-			}
+			s.GetTaskSuccessScenario(ctx, step, user, team, task)
 
 			// submit
 
-			result = s.PostSubmitScenario(ctx, step, user, team, task)
-			if result.Rewind {
-				goto Rewind
-			}
+			s.PostSubmitScenario(ctx, step, user, team, task)
 
 		}
 		// submission (確率的)
@@ -122,25 +103,21 @@ func (s *Scenario) NewLoginScenarioWorker(step *isucandar.BenchmarkStep, p int32
 }
 
 // リクエストを送ってステータスコードが成功状態であることと、レスポンスボディの形式が正しいかを確認する。
-func (s *Scenario) LoginSuccessScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User) (ScenarioResult, bool) {
+func (s *Scenario) LoginSuccessScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User) bool {
 	report := TimeReporter("ログイン成功シナリオ", s.Option)
 	defer report()
 
 	agent, err := s.GetAgentFromUser(step, user)
 	if err != nil {
-		return NoRewind(), false
+		return false
 	}
 
 	loginRes, err := PostLoginAction(ctx, agent, user.Name, user.Password)
 	if err != nil {
 		AddErrorIfNotCanceled(step, failure.NewError(ErrInvalidRequest, err))
-		return NoRewind(), false
+		return false
 	}
 	defer loginRes.Body.Close()
-
-	if loginRes.StatusCode == http.StatusUnprocessableEntity {
-		return Rewind(), false
-	}
 
 	loginResponse := &LoginResponse{}
 
@@ -152,31 +129,27 @@ func (s *Scenario) LoginSuccessScenario(ctx context.Context, step *isucandar.Ben
 	loginValidation.Add(step)
 
 	if loginValidation.IsEmpty() {
-		return NoRewind(), true
+		return true
 	} else {
-		return NoRewind(), false
+		return false
 	}
 }
 
-func (s *Scenario) GetUserSuccessScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User) ScenarioResult {
+func (s *Scenario) GetUserSuccessScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User) {
 	report := TimeReporter("user 取得 シナリオ", s.Option)
 	defer report()
 
 	agent, err := s.GetAgentFromUser(step, user)
 	if err != nil {
-		return NoRewind()
+		return
 	}
 
 	getuserRes, err := GetUserAction(ctx, agent, user.Name)
 	if err != nil {
 		AddErrorIfNotCanceled(step, failure.NewError(ErrInvalidRequest, err))
-		return NoRewind()
+		return
 	}
 	defer getuserRes.Body.Close()
-
-	if getuserRes.StatusCode == http.StatusUnprocessableEntity {
-		return Rewind()
-	}
 
 	getuserResponse := &UserResponse{}
 
@@ -187,32 +160,23 @@ func (s *Scenario) GetUserSuccessScenario(ctx context.Context, step *isucandar.B
 	)
 	getuserValidation.Add(step)
 
-	if getuserValidation.IsEmpty() {
-		return NoRewind()
-	} else {
-		return NoRewind()
-	}
 }
 
-func (s *Scenario) GetTeamSuccessScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User, teamname string) ScenarioResult {
+func (s *Scenario) GetTeamSuccessScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User, teamname string) {
 	report := TimeReporter("team 取得 シナリオ", s.Option)
 	defer report()
 
 	agent, err := s.GetAgentFromUser(step, user)
 	if err != nil {
-		return NoRewind()
+		return
 	}
 
 	getteamRes, err := GetTeamAction(ctx, agent, teamname)
 	if err != nil {
 		AddErrorIfNotCanceled(step, failure.NewError(ErrInvalidRequest, err))
-		return NoRewind()
+		return
 	}
 	defer getteamRes.Body.Close()
-
-	if getteamRes.StatusCode == http.StatusUnprocessableEntity {
-		return Rewind()
-	}
 
 	getteamResponse := &TeamResponse{}
 
@@ -222,33 +186,23 @@ func (s *Scenario) GetTeamSuccessScenario(ctx context.Context, step *isucandar.B
 		WithJsonBody(getteamResponse),
 	)
 	getteamValidation.Add(step)
-
-	if getteamValidation.IsEmpty() {
-		return NoRewind()
-	} else {
-		return NoRewind()
-	}
 }
 
-func (s *Scenario) GetTasksSuccessScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User) ScenarioResult {
+func (s *Scenario) GetTasksSuccessScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User) {
 	report := TimeReporter("tasks 取得 シナリオ", s.Option)
 	defer report()
 
 	agent, err := s.GetAgentFromUser(step, user)
 	if err != nil {
-		return NoRewind()
+		return
 	}
 
 	gettasksRes, err := GetTasksAction(ctx, agent)
 	if err != nil {
 		AddErrorIfNotCanceled(step, failure.NewError(ErrInvalidRequest, err))
-		return NoRewind()
+		return
 	}
 	defer gettasksRes.Body.Close()
-
-	if gettasksRes.StatusCode == http.StatusUnprocessableEntity {
-		return Rewind()
-	}
 
 	gettasksResponse := &[]TaskAbstract{}
 
@@ -258,33 +212,23 @@ func (s *Scenario) GetTasksSuccessScenario(ctx context.Context, step *isucandar.
 		WithJsonBody(gettasksResponse),
 	)
 	gettasksValidation.Add(step)
-
-	if gettasksValidation.IsEmpty() {
-		return NoRewind()
-	} else {
-		return NoRewind()
-	}
 }
 
-func (s *Scenario) GetTaskSuccessScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User, team *Team, task *Task) ScenarioResult {
+func (s *Scenario) GetTaskSuccessScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User, team *Team, task *Task) {
 	report := TimeReporter("task 取得 シナリオ", s.Option)
 	defer report()
 
 	agent, err := s.GetAgentFromUser(step, user)
 	if err != nil {
-		return NoRewind()
+		return
 	}
 
 	gettaskRes, err := GetTaskAction(ctx, agent, task.Name)
 	if err != nil {
 		AddErrorIfNotCanceled(step, failure.NewError(ErrInvalidRequest, err))
-		return NoRewind()
+		return
 	}
 	defer gettaskRes.Body.Close()
-
-	if gettaskRes.StatusCode == http.StatusUnprocessableEntity {
-		return Rewind()
-	}
 
 	gettaskResponse := &Task{}
 
@@ -295,20 +239,15 @@ func (s *Scenario) GetTaskSuccessScenario(ctx context.Context, step *isucandar.B
 	)
 	gettaskValidation.Add(step)
 
-	if gettaskValidation.IsEmpty() {
-		return NoRewind()
-	} else {
-		return NoRewind()
-	}
 }
 
-func (s *Scenario) PostSubmitScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User, team *Team, task *Task) ScenarioResult {
+func (s *Scenario) PostSubmitScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User, team *Team, task *Task) {
 	report := TimeReporter("submit シナリオ", s.Option)
 	defer report()
 
 	agent, err := s.GetAgentFromUser(step, user)
 	if err != nil {
-		return NoRewind()
+		return
 	}
 	submission := &Submission{}
 	// 全体で時間のロックを取るのは諦めました
@@ -345,13 +284,9 @@ func (s *Scenario) PostSubmitScenario(ctx context.Context, step *isucandar.Bench
 	submitRes, err := PostSubmitAction(ctx, agent, task.Name, submission.Answer, submission.SubmittedAt.Unix())
 	if err != nil {
 		AddErrorIfNotCanceled(step, failure.NewError(ErrInvalidRequest, err))
-		return NoRewind()
+		return
 	}
 	defer submitRes.Body.Close()
-
-	if submitRes.StatusCode == http.StatusUnprocessableEntity {
-		return Rewind()
-	}
 
 	// 一杯
 	if team.SubmissionCounts[task.ID-1] >= task.SubmissionLimit {
@@ -361,11 +296,6 @@ func (s *Scenario) PostSubmitScenario(ctx context.Context, step *isucandar.Bench
 		)
 		submitValidation.Add(step)
 
-		if submitValidation.IsEmpty() {
-			return NoRewind()
-		} else {
-			return NoRewind()
-		}
 	} else {
 
 		submitresponse := &SubmitResponse{}
@@ -384,9 +314,6 @@ func (s *Scenario) PostSubmitScenario(ctx context.Context, step *isucandar.Bench
 			team.SubmissionIDs = append(team.SubmissionIDs, int(submission.ID))
 			user.SubmissionIDs = append(user.SubmissionIDs, int(submission.ID))
 			step.AddScore(ScoreSubmission)
-			return NoRewind()
-		} else {
-			return NoRewind()
 		}
 	}
 }

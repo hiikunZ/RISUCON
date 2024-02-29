@@ -78,13 +78,13 @@ func (s *Scenario) RecordUserRegistrationCount(count int) {
 	}(count)
 }
 
-func (s *Scenario) RecordVisitorStandingsCount(count int) {
+func (s *Scenario) RecordVisitorCount(count int) {
 	s.ScenarioControlWg.Add(1)
 	go func(count int) {
 		defer s.ScenarioControlWg.Done()
-		s.VisitorStandingsMu.Lock()
-		defer s.VisitorStandingsMu.Unlock()
-		s.VisitorStandingsCount += count
+		s.VisitorMu.Lock()
+		defer s.VisitorMu.Unlock()
+		s.VisitorCount += count
 	}(count)
 }
 
@@ -92,10 +92,10 @@ func (s *Scenario) RecordVisitorStandingsCount(count int) {
 // 設定した数以上のエラーを検出すると負荷テストを打ち切るようになっている。
 func (s *Scenario) loadAdjustor(ctx context.Context, step *isucandar.BenchmarkStep, submitWorker, userRegistrationWorker, visitor *worker.Worker) {
 	tk := time.NewTicker(time.Second * 10)
-	var prevErrors int64
-	activeuserCount := 0
-	userRegistrationCount := 0
-	visitorStandingsCount := 0
+	var prevErrors, prevtimeout int64
+	bef_totalActiveUser := 0
+	bef_totalRegister := 0
+	bef_totalvisitor := 0
 	for {
 		select {
 		case <-ctx.Done():
@@ -105,39 +105,56 @@ func (s *Scenario) loadAdjustor(ctx context.Context, step *isucandar.BenchmarkSt
 
 		errors := step.Result().Errors.Count()
 		total := errors["load"]
-		if total >= int64(MaxErrors) {
-			ContestantLogger.Printf("負荷走行を打ち切ります (エラー数:%d)", total)
+		timeout := errors["timeout"] / 2 // step.Adderror 内でも NewError が呼ばれるため、timeout タグが重複してついてしまう
+		if total-timeout >= int64(MaxErrors) {
+			ContestantLogger.Printf("負荷走行を打ち切ります (タイムアウトを除くエラー数:%d)", total-timeout)
 			AdminLogger.Printf("%#v", errors)
 			step.Result().Score.Close()
 			step.Cancel()
 			return
 		}
+		loginParallels := int32(0)
+		userRegistrationParallels := int32(0)
+		diff := total - prevErrors
+		timeoutdiff := timeout - prevtimeout
+		if diff > 0 {
+			ContestantLogger.Printf("エラーが%d件(うちタイムアウト%d件)増えました (現在%d件 うちタイムアウト%d件)", diff, timeoutdiff, total, timeout)
+		}
+		totalActiveUser := s.LoginSuccessCount
+		activeuserCount := totalActiveUser - bef_totalActiveUser
+		bef_totalActiveUser = totalActiveUser
+		ContestantLogger.Printf("現在の行動成功ユーザー数: %d人 (+%d人)", totalActiveUser, activeuserCount)
 
-		loginParallels := int32(1)
-		userRegistrationParallels := int32(1)
-		if diff := total - prevErrors; diff > 5 {
-			ContestantLogger.Printf("エラーが%d件増えました(現在%d件)", diff, total)
+		totalRegister := s.UserRegistrationCount
+		userRegistrationCount := totalRegister - bef_totalRegister
+		bef_totalRegister = totalRegister
+		ContestantLogger.Printf("現在のユーザー登録成功数: %d人 (+%d人)", totalRegister, userRegistrationCount)
+
+		totalvisitorStandings := s.VisitorCount
+		visitorCount := totalvisitorStandings - bef_totalvisitor
+		bef_totalvisitor = totalvisitorStandings
+		ContestantLogger.Printf("現在の観戦者数: %d人 (+%d人)", totalvisitorStandings, visitorCount)
+
+		if diff >= 5 {
+			ContestantLogger.Print("エラーが発生しすぎているため、ユーザーは増えません")
 		} else {
-			totalActiveUser := s.LoginSuccessCount
-			activeuserCount = totalActiveUser - activeuserCount
-			ContestantLogger.Printf("現在のアクティブユーザー数: [total: %d (+%d人)]", totalActiveUser, activeuserCount)
-
-			totalRegister := s.UserRegistrationCount
-			userRegistrationCount = totalRegister - userRegistrationCount
-			ContestantLogger.Printf("現在のユーザー登録成功数: [total: %d (+%d人)]", totalRegister, userRegistrationCount)
-
-			totalvisitorStandings := s.VisitorStandingsCount
-			visitorStandingsCount = totalvisitorStandings - visitorStandingsCount
-			ContestantLogger.Printf("現在の観戦者数: [total: %d (+%d人)]", totalvisitorStandings, visitorStandingsCount)
-
 			// loginParallels, userRegistrationParallels を変更する
-
+			ContestantLogger.Print("処理成功数に応じてユーザーが増えます")
+			loginParallels = 1
+			userRegistrationParallels = 1
 		}
 
-		submitWorker.AddParallelism(loginParallels)
-		userRegistrationWorker.AddParallelism(userRegistrationParallels)
-		visitor.AddParallelism(userRegistrationParallels + loginParallels)
+		if loginParallels > 0 {
+			submitWorker.AddParallelism(loginParallels)
+		}
+		if userRegistrationParallels > 0 {
+			userRegistrationWorker.AddParallelism(userRegistrationParallels)
+		}
+		if userRegistrationParallels+loginParallels > 0 {
+			visitor.AddParallelism(userRegistrationParallels + loginParallels)
+		}
 		prevErrors = total
+		prevtimeout = timeout
 	}
 }
 
@@ -169,22 +186,6 @@ var parallelismConfig = func(s *Scenario) worker.WorkerOption {
 		return worker.WithMaxParallelism(int32(s.Option.Parallelism))
 	} else {
 		panic("please set --stage option")
-	}
-}
-
-type ScenarioResult struct {
-	Rewind bool
-}
-
-func NoRewind() ScenarioResult {
-	return ScenarioResult{
-		Rewind: false,
-	}
-}
-
-func Rewind() ScenarioResult {
-	return ScenarioResult{
-		Rewind: true,
 	}
 }
 
