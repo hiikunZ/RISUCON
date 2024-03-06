@@ -93,7 +93,7 @@ func WithStatusCode(statusCode int) ResponseValidator {
 			return failure.NewError(
 				ErrInvalidStatusCode,
 				fmt.Errorf(
-					"%s %s : expected(%d) != actual(%d)",
+					"%s %s : HTTP ステータスコードが正しくありません expected(%d) != actual(%d)",
 					r.Request.Method,
 					r.Request.URL.Path,
 					statusCode,

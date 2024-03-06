@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"net"
 	"strings"
 	"time"
@@ -187,16 +188,16 @@ func handleErrors(summary *errorSummary, prepareOnly bool, targethost string) bo
 	var printErrorWindow []error
 	aboveThreshold := false
 	if len(summary.scenarioError) > MaxErrors {
-		printErrorWindow = summary.scenarioError[0 : MaxErrors-1]
+		printErrorWindow = summary.scenarioError[0:MaxErrors]
 		aboveThreshold = true
 	} else {
 		printErrorWindow = summary.scenarioError[0:]
 	}
 
 	if aboveThreshold {
-		ContestantLogger.Printf("発生したエラー%d件のうち、最初から%d件を表示します", len(summary.scenarioError), MaxErrors)
+		ContestantLogger.Printf("負荷走行で発生したエラー%d件のうち、最初から%d件を表示します", len(summary.scenarioError), MaxErrors)
 	} else {
-		ContestantLogger.Printf("発生したエラー%d件を表示します", len(summary.scenarioError))
+		ContestantLogger.Printf("負荷走行で発生したエラー%d件を表示します", len(summary.scenarioError))
 	}
 	for i, err := range printErrorWindow {
 		if failure.IsCode(err, failure.TimeoutErrorCode) {
@@ -204,11 +205,15 @@ func handleErrors(summary *errorSummary, prepareOnly bool, targethost string) bo
 			failure.As(err, &nerr)
 			errcode := nerr.Error()
 			method := strings.ToUpper(strings.Split(errcode, " ")[0])
+			AdminLogger.Print(errcode)
 			path := strings.Split(strings.Split(errcode, targethost)[1], "\"")[0]
-			ContestantLogger.Printf("ERROR[%d] %s %s : タイムアウトが発生しました", i, method, path)
+			ContestantLogger.Printf("ERROR[%d] %s %s : タイムアウトが発生しました", i+1, method, path)
 
+		} else if failure.IsCode(err, ErrInvalidStatusCode) {
+			message := strings.Split(fmt.Sprintf("%v", err), "scenario-error-status-code: ")[1]
+			ContestantLogger.Printf("ERROR[%d] %v", i+1, message)
 		} else {
-			ContestantLogger.Printf("ERROR[%d] %v", i, err)
+			ContestantLogger.Printf("ERROR[%d] %v", i+1, err)
 		}
 	}
 

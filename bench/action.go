@@ -26,8 +26,8 @@ func PostInitializeAction(ctx context.Context, agent *agent.Agent) (*http.Respon
 }
 
 // POST /api/register
-func PostRegisterAction(ctx context.Context, agent *agent.Agent, username string, userdisplayname string, password string) (*http.Response, error) {
-	json, err := json.Marshal(RegisterRequest{Name: username, DisplayName: userdisplayname, Password: password})
+func PostRegisterAction(ctx context.Context, agent *agent.Agent, username string, userdisplayname string, description string, password string) (*http.Response, error) {
+	json, err := json.Marshal(RegisterRequest{Name: username, DisplayName: userdisplayname, Description: description, Password: password})
 	if err != nil {
 		return nil, err
 	}

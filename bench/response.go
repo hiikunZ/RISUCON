@@ -53,3 +53,31 @@ type SubmitResponse struct {
 	SubTaskMaxScore      int    `json:"subtask_max_score"`
 	RemainingSubmissions int    `json:"remaining_submissions"`
 }
+
+type TeamsStandingsSub struct {
+	TaskName     string `json:"task_name"`
+	HasSubmitted bool   `json:"has_submitted"`
+	Score        int    `json:"score"`
+}
+type TeamsStandings struct {
+	Rank               int                 `json:"rank"`
+	TeamName           string              `json:"team_name"`
+	TeamDisplayName    string              `json:"team_display_name"`
+	LeaderName         string              `json:"leader_name"`
+	LeaderDisplayName  string              `json:"leader_display_name"`
+	Member1Name        string              `json:"member1_name,omitempty"`
+	Member1DisplayName string              `json:"member1_display_name,omitempty"`
+	Member2Name        string              `json:"member2_name,omitempty"`
+	Member2DisplayName string              `json:"member2_display_name,omitempty"`
+	ScoringData        []TeamsStandingsSub `json:"scoring_data"`
+	TotalScore         int                 `json:"total_score"`
+}
+type Standings struct {
+	TasksData     []TaskAbstract   `json:"tasks_data"`
+	StandingsData []TeamsStandings `json:"standings_data"`
+}
+
+type JoinTeamResponse struct {
+	TeamName        string `json:"team_name"`
+	TeamDisplayName string `json:"team_display_name"`
+}

@@ -78,7 +78,7 @@ func (s *Scenario) NewLoginScenarioWorker(step *isucandar.BenchmarkStep, p int32
 			// task
 
 			task := s.ChooseTask(team)
-			s.GetTaskSuccessScenario(ctx, step, user, team, task)
+			s.GetTaskSuccessScenario(ctx, step, user, task)
 
 			// submit
 
@@ -86,6 +86,7 @@ func (s *Scenario) NewLoginScenarioWorker(step *isucandar.BenchmarkStep, p int32
 
 		}
 		// submission (確率的)
+
 		// standings (確率的)
 
 		// logout
@@ -214,7 +215,7 @@ func (s *Scenario) GetTasksSuccessScenario(ctx context.Context, step *isucandar.
 	gettasksValidation.Add(step)
 }
 
-func (s *Scenario) GetTaskSuccessScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User, team *Team, task *Task) {
+func (s *Scenario) GetTaskSuccessScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User, task *Task) {
 	report := TimeReporter("task 取得 シナリオ", s.Option)
 	defer report()
 
@@ -302,7 +303,7 @@ func (s *Scenario) PostSubmitScenario(ctx context.Context, step *isucandar.Bench
 
 		submitValidation := ValidateResponse(
 			submitRes,
-			WithStatusCode(200),
+			WithStatusCode(http.StatusCreated),
 			WithJsonBody(submitresponse),
 		)
 		submitValidation.Add(step)
@@ -320,6 +321,15 @@ func (s *Scenario) PostSubmitScenario(ctx context.Context, step *isucandar.Bench
 
 func (s *Scenario) GetAgentFromUser(step *isucandar.BenchmarkStep, user *User) (*agent.Agent, error) {
 	agent, err := user.GetAgent(s.Option)
+	if err != nil {
+		step.AddError(failure.NewError(ErrCannotCreateNewAgent, err))
+		return nil, err
+	}
+	return agent, nil
+}
+
+func (s *Scenario) GetAgent(step *isucandar.BenchmarkStep) (*agent.Agent, error) {
+	agent, err := s.Option.NewAgent(false)
 	if err != nil {
 		step.AddError(failure.NewError(ErrCannotCreateNewAgent, err))
 		return nil, err
