@@ -133,7 +133,7 @@ func (s *Scenario) loadAdjustor(ctx context.Context, step *isucandar.BenchmarkSt
 		totalvisitorStandings := s.VisitorCount
 		visitorCount := totalvisitorStandings - bef_totalvisitor
 		bef_totalvisitor = totalvisitorStandings
-		ContestantLogger.Printf("現在の観戦者数: %d人 (+%d人)", totalvisitorStandings, visitorCount)
+		ContestantLogger.Printf("現在の観戦成功ユーザー数: %d人 (+%d人)", totalvisitorStandings, visitorCount)
 
 		if diff >= 5 {
 			ContestantLogger.Print("エラーが発生しすぎているため、ユーザーは増えません")
