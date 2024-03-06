@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os/exec"
+	"strings"
 
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
@@ -44,11 +45,13 @@ func verifyUserSession(c echo.Context) error {
 }
 
 func calcsha256(s string) string {
-	out, err := exec.Command("/bin/echo", "-n", s, "|", "/bin/sha256sum").Output()
-	hash := out[0:64] // "ハッシュ値(64文字)  -" のような感じで出力されるので、64文字目まで取得
+	cmd := exec.Command("sha256sum", "-")
+	cmd.Stdin = strings.NewReader(s)
+	out, err := cmd.Output()
 	if err != nil {
 		return ""
 	}
+	hash := out[:64] // sha256sum の出力は "ハッシュ値  -" なので、ハッシュ値は先頭から64文字
 	return string(hash)
 }
 
