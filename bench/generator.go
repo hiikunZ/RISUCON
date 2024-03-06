@@ -4,7 +4,12 @@ import (
 	"math/rand"
 )
 
+var (
+	usernameset, teamnameset = make(map[string]bool, 0), make(map[string]bool, 0)
+)
+
 func Usergen() User {
+regenerate:
 	nameprefix := []string{
 		"a", "i", "u", "e", "o", "ka", "ki", "ku", "ke", "ko", "sa", "shi", "su", "se", "so", "ta", "chi", "tsu", "te", "to", "na", "ni", "nu", "ne", "no", "ha", "hi", "fu", "he", "ho", "ma", "mi", "mu", "me", "mo", "ya", "yu", "yo", "ra", "ri", "ru", "re", "ro", "wa", "wo", "ga", "gi", "gu", "ge", "go", "za", "zi", "zu", "ze", "zo", "da", "di", "du", "de", "do", "ba", "bi", "bu", "be", "bo", "pa", "pi", "pu", "pe", "po",
 		"aa", "ii", "uu", "ee", "oo", "kaa", "kii", "kuu", "kee", "koo", "saa", "shii", "suu", "see", "soo", "taa", "chii", "tsuu", "tee", "too", "naa", "nii", "nuu", "nee", "noo", "haa", "hii", "fuu", "hee", "hoo", "maa", "mii", "muu", "mee", "moo", "yaa", "yuu", "yoo", "raa", "rii", "ruu", "ree", "roo", "waa", "woo", "gaa", "gii", "guu", "gee", "goo", "zaa", "zii", "zuu", "zee", "zoo", "daa", "dii", "duu", "dee", "doo", "baa", "bii", "buu", "bee", "boo", "paa", "pii", "puu", "pee", "poo",
@@ -16,10 +21,10 @@ func Usergen() User {
 		"きゃー", "きゅー", "きょー", "ぎゃー", "ぎゅー", "ぎょー", "しゃー", "しゅー", "しょー", "じゃー", "じゅー", "じょー", "ちゃー", "ちゅー", "ちょー", "にゃー", "にゅー", "にょー", "ひゃー", "ひゅー", "ひょー", "びゃー", "びゅー", "びょー", "ぴゃー", "ぴゅー", "ぴょー", "みゃー", "みゅー", "みょー", "りゃー", "りゅー", "りょー",
 	}
 	namemiddle := []string{
-		"kun", "chan", "san", "sama", "dono", "sensei", "shisho", "hakase", "shi", "cat", "dog", "rabbit",
+		"kun", "chan", "san", "sama", "dono", "sensei", "shisho", "hakase", "shi", "cat", "dog", "rabbit", "red", "blue", "green", "yellow", "black", "white", "orange", "pink", "purple", "brown", "gray", "silver", "gold", "platinum", "diamond", "ruby", "sapphire", "emerald", "crystal", "pearl", "opal", "amethyst", "topaz", "garnet", "aquamarine", "peridot", "citrine", "turquoise",
 	}
 	displaynamemiddle := []string{
-		"くん", "ちゃん", "さん", "さま", "どの", "せんせい", "ししょう", "はかせ", "し", "きゃっと", "どっぐ", "らびっと",
+		"くん", "ちゃん", "さん", "さま", "どの", "せんせい", "ししょう", "はかせ", "し", "きゃっと", "どっぐ", "らびっと", "れっど", "ぶるー", "ぐりーん", "いえろー", "ぶらっく", "ほわいと", "おれんじ", "ぴんく", "ぱーぷる", "ぶらうん", "ぐれい", "しるばー", "ごーるど", "ぷらちな", "だいあもんど", "るびー", "さふぁいあ", "えめらるど", "くりすたる", "ぱーる", "おぱーる", "あめしすと", "とぱーず", "がーねっと", "あくあまりん", "ぺりどっと", "しとりん", "たーこいず",
 	}
 	namesuffix := []string{
 		"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0",
@@ -32,6 +37,10 @@ func Usergen() User {
 	suffixidx := rand.Intn(len(namesuffix))
 
 	name := nameprefix[prefixidx] + namemiddle[middleidx] + namesuffix[suffixidx]
+	if usernameset[name] {
+		goto regenerate
+	}
+	usernameset[name] = true
 	displayname := displaynameprefix[prefixidx] + displaynamemiddle[middleidx] + displaynamesuffix[suffixidx]
 
 	passwordletters := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -59,6 +68,7 @@ func Usergen() User {
 }
 
 func Teamgen() Team {
+regenerate:
 	nameprefix := []string{
 		"cho", "sugoi", "kamino", "saikyo", "kyoha", "super", "miracle", "hyper", "special", "ultra", "mysterious", "fantastic", "mystic", "mystical", "tensai", "tenshino", "akumano", "mahouno", "maou", "majo", "yuusha", "kishi", "ninja", "samurai", "shinobi", "pasokon",
 	}
@@ -82,6 +92,10 @@ func Teamgen() Team {
 	suffixidx := rand.Intn(len(namesuffix))
 
 	name := nameprefix[prefixidx] + namemiddle[middleidx] + namesuffix[suffixidx]
+	if teamnameset[name] {
+		goto regenerate
+	}
+	teamnameset[name] = true
 	displayname := displaynameprefix[prefixidx] + displaynamemiddle[middleidx] + displaynamesuffix[suffixidx]
 	description := "チーム「" + displayname + "」です。よろしくお願いします。"
 	invitation_code := ""
