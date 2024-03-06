@@ -632,7 +632,7 @@ func submitHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit transaction: "+err.Error())
 	}
 
-	return c.JSON(http.StatusOK, res)
+	return c.JSON(http.StatusCreated, res)
 }
 
 type SubmissionDetail struct {

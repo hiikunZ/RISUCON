@@ -99,7 +99,7 @@ func createTeamHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit transaction: "+err.Error())
 	}
 
-	return c.NoContent(http.StatusOK)
+	return c.NoContent(http.StatusCreated)
 }
 
 type JoinTeamRequest struct {
@@ -177,7 +177,7 @@ func joinTeamHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit transaction: "+err.Error())
 	}
 
-	return c.JSON(http.StatusOK, JoinTeamResponse{
+	return c.JSON(http.StatusCreated, JoinTeamResponse{
 		TeamName:        team.Name,
 		TeamDisplayName: team.DisplayName,
 	})
