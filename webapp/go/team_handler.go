@@ -84,7 +84,7 @@ func createTeamHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get team: "+err.Error())
 	}
 
-	err = tx.GetContext(ctx, &team, "SELECT * FROM teams WHERE leader_id = ? OR member1_id = ? OR  member2_id = ?", usr.ID, usr.ID, usr.ID)
+	err = tx.GetContext(ctx, &team, "SELECT * FROM teams WHERE leader_id = ? OR member1_id = ? OR member2_id = ?", usr.ID, usr.ID, usr.ID)
 	if err == nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "you have already joined team")
 	} else if err != sql.ErrNoRows {
@@ -154,7 +154,7 @@ func joinTeamHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user: "+err.Error())
 	}
 
-	err = tx.GetContext(ctx, &team, "SELECT * FROM teams WHERE leader_id = ? OR member1_id = ? OR  member2_id = ?", usr.ID, usr.ID, usr.ID)
+	err = tx.GetContext(ctx, &team, "SELECT * FROM teams WHERE leader_id = ? OR member1_id = ? OR member2_id = ?", usr.ID, usr.ID, usr.ID)
 	if err == nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "you have already joined team")
 	} else if err != sql.ErrNoRows {
