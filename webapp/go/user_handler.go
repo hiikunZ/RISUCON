@@ -1,11 +1,10 @@
 package main
 
 import (
-	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"net/http"
+	"os/exec"
 
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
@@ -44,6 +43,15 @@ func verifyUserSession(c echo.Context) error {
 	return nil
 }
 
+func calcsha256(s string) string {
+	out, err := exec.Command("/bin/echo", "-n", s, "|", "/bin/sha256sum").Output()
+	hash := out[0:64] // "ハッシュ値(64文字)  -" のような感じで出力されるので、64文字目まで取得
+	if err != nil {
+		return ""
+	}
+	return string(hash)
+}
+
 // POST /api/register
 func registerHandler(c echo.Context) error {
 	ctx := c.Request().Context()
@@ -76,7 +84,7 @@ func registerHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user: "+err.Error())
 	}
 
-	pashhash := fmt.Sprintf("%x", sha256.Sum256([]byte(req.Password)))
+	pashhash := calcsha256(req.Password)
 
 	if _, err = tx.ExecContext(ctx, "INSERT INTO users (name, display_name, description, passhash) VALUES (?, ?, ?, ?)", req.Name, req.DisplayName, req.Description, pashhash); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert user: "+err.Error())
@@ -128,7 +136,7 @@ func loginHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user: "+err.Error())
 	}
 
-	pashhash := fmt.Sprintf("%x", sha256.Sum256([]byte(req.Password)))
+	pashhash := calcsha256(req.Password)
 
 	if usr.Passhash != pashhash {
 		return echo.NewHTTPError(http.StatusUnauthorized, "authentication failed")
@@ -161,9 +169,9 @@ func loginHandler(c echo.Context) error {
 	}
 	if teamfound {
 		return c.JSON(http.StatusOK, LoginResponse{
-			Name:        usr.Name,
-			DisplayName: usr.DisplayName,
-			TeamName:    team.Name,
+			Name:            usr.Name,
+			DisplayName:     usr.DisplayName,
+			TeamName:        team.Name,
 			TeamDisplayName: team.DisplayName,
 		})
 	} else {
