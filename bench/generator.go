@@ -8,6 +8,15 @@ var (
 	usernameset, teamnameset = make(map[string]bool, 0), make(map[string]bool, 0)
 )
 
+func (s *Scenario) addexistnametoset(){
+	for _, u := range s.Users.list {
+		usernameset[u.Name] = true
+	}
+	for _, t := range s.Teams.list {
+		teamnameset[t.Name] = true
+	}
+}
+
 func Usergen() User {
 regenerate:
 	nameprefix := []string{

@@ -49,6 +49,8 @@ func (s *Scenario) Prepare(ctx context.Context, step *isucandar.BenchmarkStep) e
 		return err
 	}
 
+	s.addexistnametoset()
+
 	ctx, cancel := context.WithTimeout(ctx, s.Option.InitializeRequestTimeout)
 	defer cancel()
 
