@@ -45,7 +45,7 @@ func verifyUserSession(c echo.Context) error {
 }
 
 func calcsha256(s string) string {
-	cmd := exec.Command("sha256sum", "-")
+	cmd := exec.Command("/bin/sha256sum", "-")
 	cmd.Stdin = strings.NewReader(s)
 	out, err := cmd.Output()
 	if err != nil {
