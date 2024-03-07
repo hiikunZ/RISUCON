@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -36,9 +37,20 @@ func (s *Scenario) NewVisitorScenarioWorker(step *isucandar.BenchmarkStep, p int
 		}
 
 		// standings
-		s.GetStandingsSuccessScenario_guest(ctx, step, agent)
+		topteamname, ok := s.GetStandingsSuccessScenario_guest(ctx, step, agent)
+		if !ok {
+			return
+		}
 		// 上位チームの情報を見る
-
+		if rand.Float64() < 0.8 {
+			teamname := ""
+			if rand.Float64() < 0.5 {
+				teamname = topteamname[0]
+			} else {
+				teamname = topteamname[rand.Intn(2)+1]
+			}
+			s.GetTeamSuccessScenario_guest(ctx, step, agent, teamname)
+		}
 		// 成功
 		s.RecordVisitorCount(1)
 	}, loopConfig(s), parallelismConfig(s))
@@ -80,7 +92,7 @@ func (s *Scenario) GetTaskSuccessScenario_guest(ctx context.Context, step *isuca
 	}
 	defer gettaskRes.Body.Close()
 
-	gettaskResponse := &Task{}
+	gettaskResponse := &TaskDetail{}
 
 	gettaskValidation := ValidateResponse(
 		gettaskRes,
@@ -90,14 +102,14 @@ func (s *Scenario) GetTaskSuccessScenario_guest(ctx context.Context, step *isuca
 	gettaskValidation.Add(step)
 }
 
-func (s *Scenario) GetStandingsSuccessScenario_guest(ctx context.Context, step *isucandar.BenchmarkStep, agent *agent.Agent) {
+func (s *Scenario) GetStandingsSuccessScenario_guest(ctx context.Context, step *isucandar.BenchmarkStep, agent *agent.Agent) ([]string, bool) {
 	report := TimeReporter("standings 取得 シナリオ", s.Option)
 	defer report()
 
 	getstandingsRes, err := GetStandingsAction(ctx, agent)
 	if err != nil {
 		AddErrorIfNotCanceled(step, failure.NewError(ErrInvalidRequest, err))
-		return
+		return nil, false
 	}
 	defer getstandingsRes.Body.Close()
 
@@ -109,4 +121,42 @@ func (s *Scenario) GetStandingsSuccessScenario_guest(ctx context.Context, step *
 		WithJsonBody(getstandingsresponce),
 	)
 	getstandingsValidation.Add(step)
+
+	if getstandingsValidation.IsEmpty() {
+		topteamname := []string{}
+		if len(getstandingsresponce.StandingsData) < 3 {
+			AddErrorIfNotCanceled(step, failure.NewError(ErrInvalidResponse, fmt.Errorf("GET /api/standings : StandingsData が正しくありません")))
+			return nil, false
+		}
+		for i := 0; i < 3; i++ {
+			if getstandingsresponce.StandingsData[i].TeamName == "" {
+				AddErrorIfNotCanceled(step, failure.NewError(ErrInvalidResponse, fmt.Errorf("GET /api/standings : StandingsData が正しくありません")))
+				return nil, false
+			}
+			topteamname = append(topteamname, getstandingsresponce.StandingsData[i].TeamName)
+		}
+		return topteamname, true
+	}
+	return nil, false
+}
+
+func (s *Scenario) GetTeamSuccessScenario_guest(ctx context.Context, step *isucandar.BenchmarkStep, agent *agent.Agent, teamname string) {
+	report := TimeReporter("task 取得 シナリオ", s.Option)
+	defer report()
+
+	getteamRes, err := GetTeamAction(ctx, agent, teamname)
+	if err != nil {
+		AddErrorIfNotCanceled(step, failure.NewError(ErrInvalidRequest, err))
+		return
+	}
+	defer getteamRes.Body.Close()
+
+	getteamResponse := &TeamResponse{}
+
+	getteamValidation := ValidateResponse(
+		getteamRes,
+		WithStatusCode(200),
+		WithJsonBody(getteamResponse),
+	)
+	getteamValidation.Add(step)
 }

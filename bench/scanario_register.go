@@ -138,6 +138,7 @@ func (s *Scenario) RegisterSuccessScenario(ctx context.Context, step *isucandar.
 	registerValidation.Add(step)
 
 	if registerValidation.IsEmpty() {
+		step.AddScore(ScoreRegisteration)
 		return true
 	} else {
 		return false
@@ -202,7 +203,7 @@ func (s *Scenario) GetTeam_GetTokenScenario(ctx context.Context, step *isucandar
 		if teamResponse.InvitationCode != "" {
 			return teamResponse.InvitationCode, true
 		}
-		failure.NewError(ErrInvalidRequest, fmt.Errorf("POST /api/teams/%v : InvitationCode が存在しません", team.Name))
+		AddErrorIfNotCanceled(step, failure.NewError(ErrInvalidResponse, fmt.Errorf("POST /api/teams/%v : InvitationCode が存在しません", team.Name)))
 		return "", false
 	} else {
 		return "", false

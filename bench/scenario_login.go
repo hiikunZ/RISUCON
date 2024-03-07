@@ -75,22 +75,24 @@ func (s *Scenario) NewLoginScenarioWorker(step *isucandar.BenchmarkStep, p int32
 		for i := 0; i < tasksubmitcnt; i++ {
 			// tasks
 			s.GetTasksSuccessScenario(ctx, step, user)
-			// task
 
+			// task
 			task := s.ChooseTask(team)
 			s.GetTaskSuccessScenario(ctx, step, user, task)
 
 			// submit
-
 			s.PostSubmitScenario(ctx, step, user, team, task)
-
 		}
 		// submission (確率的)
-
+		if rand.Float64() < 0.5 {
+			s.GetSubmissionsScenario(ctx, step, user, team)
+		}
 		// standings (確率的)
-
+		if rand.Float64() < 0.5 {
+			s.GetStandingsSuccessScenario(ctx, step, user)
+		}
 		// logout
-
+		s.LogoutSuccessScenario(ctx, step, user)
 		// ここまでできたら成功
 		s.RecordLoginSuccessCount(1)
 
@@ -231,7 +233,7 @@ func (s *Scenario) GetTaskSuccessScenario(ctx context.Context, step *isucandar.B
 	}
 	defer gettaskRes.Body.Close()
 
-	gettaskResponse := &Task{}
+	gettaskResponse := &TaskDetail{}
 
 	gettaskValidation := ValidateResponse(
 		gettaskRes,
@@ -317,6 +319,132 @@ func (s *Scenario) PostSubmitScenario(ctx context.Context, step *isucandar.Bench
 			step.AddScore(ScoreSubmission)
 		}
 	}
+}
+
+func (s *Scenario) GetSubmissionsScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User, team *Team) {
+	report := TimeReporter("submissions 取得 シナリオ", s.Option)
+	defer report()
+
+	submissionsperpage := 20
+
+	agent, err := s.GetAgentFromUser(step, user)
+	if err != nil {
+		return
+	}
+	
+	page := 1
+	if len(team.SubmissionIDs) > submissionsperpage && rand.Float64() < 0.05 {
+		page = 2
+	}
+
+	username := ""
+	if rand.Float64() < 0.3 {
+		memberids := []int{}
+		memberids = append(memberids, team.LeaderID)
+		if team.Member1ID != nullteamid {
+			memberids = append(memberids, team.Member1ID)
+			if team.Member2ID != nullteamid {
+				memberids = append(memberids, team.Member2ID)
+			}
+		}
+		user, ok := s.Users.Get(memberids[rand.Intn(len(memberids))])
+		if !ok {
+			return
+		}
+		username = user.Name
+	}
+	taskname := ""
+	subtaskname := ""
+	if rand.Float64() < 0.3 {
+		task := s.Tasks.At(rand.Intn(s.Tasks.Len()))
+		taskname = task.Name
+		if rand.Float64() < 0.3 {
+			subtaskname = task.SubTasks[rand.Intn(len(task.SubTasks))].Name
+		}
+	}
+
+	answerfilter := ""
+	if rand.Float64() < 0.1 {
+		sub, ok := s.Submissions.Get(team.SubmissionIDs[rand.Intn(len(team.SubmissionIDs))])
+		if !ok {
+			return
+		}
+		answerfilter = sub.Answer
+		if rand.Float64() < 0.3 {
+			l := rand.Intn(len(answerfilter))
+			r := rand.Intn(len(answerfilter))
+			if l > r {
+				l, r = r, l
+			}
+			answerfilter = answerfilter[l : r+1]
+		}
+	}
+
+	getsubmissionsRes, err := GetSubmissionsAction(ctx, agent, page, username, "", taskname, subtaskname, answerfilter)
+	if err != nil {
+		AddErrorIfNotCanceled(step, failure.NewError(ErrInvalidRequest, err))
+		return
+	}
+	defer getsubmissionsRes.Body.Close()
+
+	getsubmissionsresponce := &submissionresponse{}
+
+	getsubmissionsValidation := ValidateResponse(
+		getsubmissionsRes,
+		WithStatusCode(200),
+		WithJsonBody(getsubmissionsresponce),
+	)
+
+	getsubmissionsValidation.Add(step)
+}
+
+func (s *Scenario) GetStandingsSuccessScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User) {
+	report := TimeReporter("standings 取得 シナリオ", s.Option)
+	defer report()
+
+	agent, err := s.GetAgentFromUser(step, user)
+	if err != nil {
+		return
+	}
+
+	getstandingsRes, err := GetStandingsAction(ctx, agent)
+	if err != nil {
+		AddErrorIfNotCanceled(step, failure.NewError(ErrInvalidRequest, err))
+		return
+	}
+	defer getstandingsRes.Body.Close()
+
+	getstandingsresponce := &Standings{}
+
+	getstandingsValidation := ValidateResponse(
+		getstandingsRes,
+		WithStatusCode(200),
+		WithJsonBody(getstandingsresponce),
+	)
+	getstandingsValidation.Add(step)
+}
+
+func (s *Scenario) LogoutSuccessScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User) {
+	report := TimeReporter("ログアウト シナリオ", s.Option)
+	defer report()
+
+	agent, err := s.GetAgentFromUser(step, user)
+	if err != nil {
+		return
+	}
+
+	logoutRes, err := PostLogoutAction(ctx, agent)
+	if err != nil {
+		AddErrorIfNotCanceled(step, failure.NewError(ErrInvalidRequest, err))
+		return
+	}
+	defer logoutRes.Body.Close()
+
+	logoutValidation := ValidateResponse(
+		logoutRes,
+		WithStatusCode(200),
+	)
+	logoutValidation.Add(step)
 }
 
 func (s *Scenario) GetAgentFromUser(step *isucandar.BenchmarkStep, user *User) (*agent.Agent, error) {
