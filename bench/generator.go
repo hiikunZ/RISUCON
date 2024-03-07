@@ -2,13 +2,15 @@ package main
 
 import (
 	"math/rand"
+	"sync"
 )
 
 var (
-	usernameset, teamnameset = make(map[string]bool, 0), make(map[string]bool, 0)
+	usernamesetmu, teamnamesetmu = sync.Mutex{}, sync.Mutex{}
+	usernameset, teamnameset     = make(map[string]bool, 0), make(map[string]bool, 0)
 )
 
-func (s *Scenario) addexistnametoset(){
+func (s *Scenario) addexistnametoset() {
 	for _, u := range s.Users.list {
 		usernameset[u.Name] = true
 	}
@@ -46,10 +48,14 @@ regenerate:
 	suffixidx := rand.Intn(len(namesuffix))
 
 	name := nameprefix[prefixidx] + namemiddle[middleidx] + namesuffix[suffixidx]
+
+	usernamesetmu.Lock()
 	if usernameset[name] {
 		goto regenerate
 	}
 	usernameset[name] = true
+	usernamesetmu.Unlock()
+
 	displayname := displaynameprefix[prefixidx] + displaynamemiddle[middleidx] + displaynamesuffix[suffixidx]
 
 	passwordletters := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -101,10 +107,14 @@ regenerate:
 	suffixidx := rand.Intn(len(namesuffix))
 
 	name := nameprefix[prefixidx] + namemiddle[middleidx] + namesuffix[suffixidx]
+
+	teamnamesetmu.Lock()
 	if teamnameset[name] {
 		goto regenerate
 	}
 	teamnameset[name] = true
+	teamnamesetmu.Unlock()
+	
 	displayname := displaynameprefix[prefixidx] + displaynamemiddle[middleidx] + displaynamesuffix[suffixidx]
 	description := "チーム「" + displayname + "」です。よろしくお願いします。"
 	invitation_code := ""
