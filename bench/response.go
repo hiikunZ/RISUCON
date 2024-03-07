@@ -81,3 +81,39 @@ type JoinTeamResponse struct {
 	TeamName        string `json:"team_name"`
 	TeamDisplayName string `json:"team_display_name"`
 }
+
+type SubmissionDetail struct {
+	TaskName           string `json:"task_name"`
+	TaskDisplayName    string `json:"task_display_name"`
+	SubTaskName        string `json:"subtask_name"`
+	SubTaskDisplayName string `json:"subtask_display_name"`
+	SubTaskMaxScore    int    `json:"subtask_max_score"`
+	UserName           string `json:"user_name"`
+	UserDisplayName    string `json:"user_display_name"`
+	SubmittedAt        int64  `json:"submitted_at"`
+	Answer             string `json:"answer"`
+	Score              int    `json:"score"`
+}
+
+type submissionresponse struct {
+	Submissions     []SubmissionDetail `json:"submissions"`
+	SubmissionCount int                `json:"submission_count"`
+}
+
+type SubtaskDetail struct {
+	Name        string `json:"name"`
+	DisplayName string `json:"display_name"`
+	Statement   string `json:"statement"`
+	MaxScore    int    `json:"max_score"`
+	Score       int    `json:"score"`
+}
+type TaskDetail struct {
+	Name            string          `json:"name"`
+	DisplayName     string          `json:"display_name"`
+	Statement       string          `json:"statement"`
+	MaxScore        int             `json:"max_score"`
+	Score           int             `json:"score"`
+	SubmissionLimit int             `json:"submission_limit"`
+	SubmissionCount int             `json:"submission_count"`
+	Subtasks        []SubtaskDetail `json:"subtasks"`
+}
