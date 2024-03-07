@@ -11,10 +11,12 @@ import (
 
 const (
 	ScoreSubmission score.ScoreTag = "提出成功"
+	ScoreRegisteration score.ScoreTag = "ユーザ登録成功"
 )
 
 var ScoreRateTable = map[score.ScoreTag]int64{
-	ScoreSubmission: 1,
+	ScoreSubmission: 10,
+	ScoreRegisteration: 15,
 }
 
 // シナリオ中に発生したエラーは1つ15点減点する

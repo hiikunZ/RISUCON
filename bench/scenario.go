@@ -92,7 +92,7 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 
 	wg := &sync.WaitGroup{}
 	// 各シナリオを走らせる。
-	loginSuccess, err := s.NewLoginScenarioWorker(step, 1)
+	loginSuccess, err := s.NewLoginScenarioWorker(step, 3)
 	if err != nil {
 		return err
 	}

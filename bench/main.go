@@ -114,8 +114,7 @@ func main() {
 
 func sumScore(result *isucandar.BenchmarkResult, errorSummary *errorSummary) *scoreSummary {
 	score := result.Score
-	// 各タグに倍率を設定
-	score.Set(ScoreSubmission, 1)
+	score = MakeScoreTable(score)
 
 	addition := score.Sum()
 	deduction := int64(len(errorSummary.scenarioError) * ErrorDeduction)
@@ -200,6 +199,8 @@ func handleErrors(summary *errorSummary, prepareOnly bool, targethost string) bo
 		ContestantLogger.Printf("負荷走行で発生したエラー%d件を表示します", len(summary.scenarioError))
 	}
 	for i, err := range printErrorWindow {
+		AdminLogger.Printf("ERROR[%d] %+v", i+1, err)
+		AdminLogger.Printf("ERROR[%d] %v", i+1, err)
 		if failure.IsCode(err, failure.TimeoutErrorCode) {
 			var nerr net.Error
 			failure.As(err, &nerr)

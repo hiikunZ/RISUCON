@@ -136,12 +136,12 @@ func (s *Scenario) loadAdjustor(ctx context.Context, step *isucandar.BenchmarkSt
 		ContestantLogger.Printf("現在の観戦成功ユーザー数: %d人 (+%d人)", totalvisitorStandings, visitorCount)
 
 		if diff >= 5 {
-			ContestantLogger.Print("エラーが発生しすぎているため、ユーザーは増えません")
+			ContestantLogger.Print("エラーが発生しすぎているため、負荷は上がりません")
 		} else {
 			// loginParallels, userRegistrationParallels を変更する
-			ContestantLogger.Print("処理成功数に応じてユーザーが増えます")
-			loginParallels = 1
-			userRegistrationParallels = 1
+			ContestantLogger.Print("処理成功数に応じて負荷が上がります")
+			loginParallels = int32(userRegistrationCount / 15)
+			userRegistrationParallels = int32(visitorCount / 5)
 		}
 
 		if loginParallels > 0 {
@@ -151,7 +151,7 @@ func (s *Scenario) loadAdjustor(ctx context.Context, step *isucandar.BenchmarkSt
 			userRegistrationWorker.AddParallelism(userRegistrationParallels)
 		}
 		if userRegistrationParallels+loginParallels > 0 {
-			visitor.AddParallelism(userRegistrationParallels + loginParallels)
+			visitor.AddParallelism((userRegistrationParallels + loginParallels) / 2)
 		}
 		prevErrors = total
 		prevtimeout = timeout
