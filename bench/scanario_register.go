@@ -32,7 +32,8 @@ func (s *Scenario) NewUserRegistrationScenarioWorker(step *isucandar.BenchmarkSt
 				member2 = Usergen()
 			}
 		}
-		// register + login
+		// 静的ファイル * register + login
+		s.GetIndexScenario(ctx, step, &leader)
 		if ok := s.RegisterSuccessScenario(ctx, step, &leader); !ok {
 			return
 		}
@@ -40,6 +41,7 @@ func (s *Scenario) NewUserRegistrationScenarioWorker(step *isucandar.BenchmarkSt
 			return
 		}
 		if teammembercount >= 2 {
+			s.GetIndexScenario(ctx, step, &member1)
 			if ok := s.RegisterSuccessScenario(ctx, step, &member1); !ok {
 				return
 			}
@@ -47,6 +49,7 @@ func (s *Scenario) NewUserRegistrationScenarioWorker(step *isucandar.BenchmarkSt
 				return
 			}
 			if teammembercount >= 3 {
+				s.GetIndexScenario(ctx, step, &member2)
 				if ok := s.RegisterSuccessScenario(ctx, step, &member2); !ok {
 					return
 				}

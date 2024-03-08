@@ -13,6 +13,10 @@ import (
 	"github.com/isucon/isucandar/agent"
 )
 
+const (
+	jsfilename = "index-ovNpRrI3.js"
+	cssfilename = "index-npEbj7xQ.css"
+)
 // POST /api/initialize にリクエストを送る
 func PostInitializeAction(ctx context.Context, agent *agent.Agent) (*http.Response, error) {
 	req, err := agent.POST("/api/initialize", nil)
@@ -224,6 +228,37 @@ func PostCreateTaskAction(ctx context.Context, agent *agent.Agent, reqdata Creat
 
 	return agent.Do(ctx, req)
 }
+
+// GET /
+func GetIndexAction(ctx context.Context, agent *agent.Agent) (*http.Response, error) {
+	req, err := agent.GET("/")
+	if err != nil {
+		return nil, err
+	}
+
+	return agent.Do(ctx, req)
+}
+
+// GET /assets/*.js
+func GetJSAction(ctx context.Context, agent *agent.Agent) (*http.Response, error) {
+	req, err := agent.GET("/assets/" + jsfilename)
+	if err != nil {
+		return nil, err
+	}
+
+	return agent.Do(ctx, req)
+}
+
+// GET /assets/*.css
+func GetCSSAction(ctx context.Context, agent *agent.Agent) (*http.Response, error) {
+	req, err := agent.GET("/assets/" + cssfilename)
+	if err != nil {
+		return nil, err
+	}
+
+	return agent.Do(ctx, req)
+}
+
 func setContentType(req *http.Request) {
 	req.Header.Set("Content-Type", "application/json")
 }

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,6 +12,11 @@ import (
 
 	"github.com/isucon/isucandar"
 	"github.com/isucon/isucandar/failure"
+)
+
+var (
+	nonce                              []byte
+	indexhash, jsfilehash, cssfilehash [32]byte
 )
 
 type ValidationError struct {
@@ -87,6 +94,26 @@ func ValidateResponse(res *http.Response, validators ...ResponseValidator) Valid
 	}
 }
 
+func ValidateStaticFile(expectedhash [32]byte) ResponseValidator {
+	return func(r *http.Response) error {
+		b, err := io.ReadAll(r.Body)
+		if err != nil {
+			return failure.NewError(ErrInvalidResponse, err)
+		}
+
+		// nonce を足す
+		b = append(b, nonce...)
+
+		actualhash := sha256.Sum256(b)
+		if !bytes.Equal(expectedhash[:], actualhash[:]) {
+			return failure.NewError(ErrInvalidResponse, fmt.Errorf(
+				"%s %s : 静的ファイルが正しくありません",
+				r.Request.Method, r.Request.URL.Path,
+			))
+		}
+		return nil
+	}
+}
 func WithStatusCode(statusCode int) ResponseValidator {
 	return func(r *http.Response) error {
 		if r.StatusCode != statusCode {

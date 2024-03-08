@@ -26,6 +26,10 @@ func (s *Scenario) NewVisitorScenarioWorker(step *isucandar.BenchmarkStep, p int
 			return
 		}
 
+		// 静的ファイル
+		s.GetIndexScenario_guest(ctx, step, agent)
+		s.GetJSScenario_guest(ctx, step, agent)
+		s.GetCSSScenario_guest(ctx, step, agent)
 		// tasks (確率的に)
 		if rand.Float64() < 0.5 {
 			s.GetTasksSuccessScenario_guest(ctx, step, agent)
@@ -159,4 +163,63 @@ func (s *Scenario) GetTeamSuccessScenario_guest(ctx context.Context, step *isuca
 		WithJsonBody(getteamResponse),
 	)
 	getteamValidation.Add(step)
+}
+func (s *Scenario) GetIndexScenario_guest(ctx context.Context, step *isucandar.BenchmarkStep, agent *agent.Agent) {
+	report := TimeReporter("index 取得 シナリオ", s.Option)
+	defer report()
+
+	indexRes, err := GetIndexAction(ctx, agent)
+	if err != nil {
+		AddErrorIfNotCanceled(step, failure.NewError(ErrInvalidRequest, err))
+		return
+	}
+	defer indexRes.Body.Close()
+
+	if rand.Intn(10) == 0 { // 10% の確率で確認 
+		indexValidation := ValidateResponse(
+			indexRes,
+			ValidateStaticFile(indexhash),
+		)
+		indexValidation.Add(step)
+	}
+}
+
+func (s *Scenario) GetJSScenario_guest(ctx context.Context, step *isucandar.BenchmarkStep, agent *agent.Agent) {
+	report := TimeReporter("js 取得 シナリオ", s.Option)
+	defer report()
+
+	jsRes, err := GetJSAction(ctx, agent)
+	if err != nil {
+		AddErrorIfNotCanceled(step, failure.NewError(ErrInvalidRequest, err))
+		return
+	}
+	defer jsRes.Body.Close()
+
+	if rand.Intn(10) == 0 { // 10% の確率で確認
+		jsValidation := ValidateResponse(
+			jsRes,
+			ValidateStaticFile(jsfilehash),
+		)
+		jsValidation.Add(step)
+	}
+}
+
+func (s *Scenario) GetCSSScenario_guest(ctx context.Context, step *isucandar.BenchmarkStep, agent *agent.Agent) {
+	report := TimeReporter("css 取得 シナリオ", s.Option)
+	defer report()
+
+	cssRes, err := GetCSSAction(ctx, agent)
+	if err != nil {
+		AddErrorIfNotCanceled(step, failure.NewError(ErrInvalidRequest, err))
+		return
+	}
+	defer cssRes.Body.Close()
+
+	if rand.Intn(10) == 0 { // 10% の確率で確認
+		cssValidation := ValidateResponse(
+			cssRes,
+			ValidateStaticFile(cssfilehash),
+		)
+		cssValidation.Add(step)
+	}
 }

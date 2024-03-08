@@ -135,6 +135,9 @@ func (sc *Scenario) PretestScenario(ctx context.Context, step *isucandar.Benchma
 	ContestantLogger.Println("[PretestScenario] 整合性チェックを開始します")
 	defer ContestantLogger.Printf("[PretestScenario] 整合性チェックを終了します")
 
+	// 静的ファイルの確認
+	
+
 	checkuserIDs := []int{2, 4, 10}
 	for cnt := 0; cnt < 4; cnt++ {
 		// User 取り出し
@@ -199,6 +202,9 @@ func (sc *Scenario) PretestScenario(ctx context.Context, step *isucandar.Benchma
 	// join
 	// もうチームに所属しているのに create できないことを確認
 	// もうチームに所属しているのに join できないことを確認
+
+	// 新規問題に submit
+	// もう一度 submit すると制限に引っかかることを確認
 
 	return nil
 }

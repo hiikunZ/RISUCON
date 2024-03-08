@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -56,6 +57,34 @@ func (s *Scenario) LoadInitialData() error {
 		ContestantLogger.Println("初期データ (submissions) のロードに失敗しました")
 		return failure.NewError(ErrFailedToLoadJson, err)
 	}
+
+	// nonce の設定
+	nonce = []byte("RiSuCoN")
+
+	// ファイルのハッシュ値を計算
+	indexfile, err := os.ReadFile("./data/index.html")
+	if err != nil {
+		ContestantLogger.Println("初期データ (index.html) の読み込みに失敗しました")
+		return failure.NewError(ErrFailedToLoadJson, err)
+	}
+	indexfile = append(indexfile, nonce...)
+	indexhash = sha256.Sum256(indexfile)
+
+	jsfile, err := os.ReadFile("./data/" + jsfilename)
+	if err != nil {
+		ContestantLogger.Println("初期データ (js) の読み込みに失敗しました")
+		return failure.NewError(ErrFailedToLoadJson, err)
+	}
+	jsfile = append(jsfile, nonce...)
+	jsfilehash = sha256.Sum256(jsfile)
+
+	cssfile, err := os.ReadFile("./data/" + cssfilename)
+	if err != nil {
+		ContestantLogger.Println("初期データ (css) の読み込みに失敗しました")
+		return failure.NewError(ErrFailedToLoadJson, err)
+	}
+	cssfile = append(cssfile, nonce...)
+	cssfilehash = sha256.Sum256(cssfile)
 
 	return nil
 }

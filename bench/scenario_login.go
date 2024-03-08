@@ -57,7 +57,10 @@ func (s *Scenario) NewLoginScenarioWorker(step *isucandar.BenchmarkStep, p int32
 		defer s.ConsumedUserIDs.Remove(int64(user.ID))
 
 		team, _ := s.Teams.Get(user.TeamID)
-
+		// 静的ファイル
+		s.GetIndexScenario(ctx, step, user)
+		s.GetJSScenario(ctx, step, user)
+		s.GetCSSScenario(ctx, step, user)
 		// ログイン
 		ok := s.LoginSuccessScenario(ctx, step, user)
 		if !ok {
@@ -96,13 +99,87 @@ func (s *Scenario) NewLoginScenarioWorker(step *isucandar.BenchmarkStep, p int32
 		// ここまでできたら成功
 		s.RecordLoginSuccessCount(1)
 
-		user.ClearAgent()
 	}, loopConfig(s), parallelismConfig(s))
 
 	loginSuccess.SetParallelism(p)
 
 	return loginSuccess, err
 
+}
+
+func (s *Scenario) GetIndexScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User) {
+	report := TimeReporter("index 取得 シナリオ", s.Option)
+	defer report()
+
+	agent, err := s.GetAgentFromUser(step, user)
+	if err != nil {
+		return
+	}
+
+	indexRes, err := GetIndexAction(ctx, agent)
+	if err != nil {
+		AddErrorIfNotCanceled(step, failure.NewError(ErrInvalidRequest, err))
+		return
+	}
+	defer indexRes.Body.Close()
+
+	if rand.Intn(10) == 0 { // 10% の確率で確認 
+		indexValidation := ValidateResponse(
+			indexRes,
+			ValidateStaticFile(indexhash),
+		)
+		indexValidation.Add(step)
+	}
+}
+
+func (s *Scenario) GetJSScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User) {
+	report := TimeReporter("js 取得 シナリオ", s.Option)
+	defer report()
+
+	agent, err := s.GetAgentFromUser(step, user)
+	if err != nil {
+		return
+	}
+
+	jsRes, err := GetJSAction(ctx, agent)
+	if err != nil {
+		AddErrorIfNotCanceled(step, failure.NewError(ErrInvalidRequest, err))
+		return
+	}
+	defer jsRes.Body.Close()
+
+	if rand.Intn(10) == 0 { // 10% の確率で確認
+		jsValidation := ValidateResponse(
+			jsRes,
+			ValidateStaticFile(jsfilehash),
+		)
+		jsValidation.Add(step)
+	}
+}
+
+func (s *Scenario) GetCSSScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User) {
+	report := TimeReporter("css 取得 シナリオ", s.Option)
+	defer report()
+
+	agent, err := s.GetAgentFromUser(step, user)
+	if err != nil {
+		return
+	}
+
+	cssRes, err := GetCSSAction(ctx, agent)
+	if err != nil {
+		AddErrorIfNotCanceled(step, failure.NewError(ErrInvalidRequest, err))
+		return
+	}
+	defer cssRes.Body.Close()
+
+	if rand.Intn(10) == 0 { // 10% の確率で確認
+		cssValidation := ValidateResponse(
+			cssRes,
+			ValidateStaticFile(cssfilehash),
+		)
+		cssValidation.Add(step)
+	}
 }
 
 // リクエストを送ってステータスコードが成功状態であることと、レスポンスボディの形式が正しいかを確認する。
@@ -331,7 +408,7 @@ func (s *Scenario) GetSubmissionsScenario(ctx context.Context, step *isucandar.B
 	if err != nil {
 		return
 	}
-	
+
 	page := 1
 	if len(team.SubmissionIDs) > submissionsperpage && rand.Float64() < 0.05 {
 		page = 2
