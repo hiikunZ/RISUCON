@@ -88,7 +88,7 @@ func createTaskHandler(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get subtaskID: "+err.Error())
 		}
 		for _, answer := range subtask.Answers {
-			if _, err := tx.ExecContext(ctx, "INSERT INTO answers (task_id, subtask_id, answer, score) VALUES (?, ?, ?)", taskID, subtaskID, answer.Answer, answer.Score); err != nil {
+			if _, err := tx.ExecContext(ctx, "INSERT INTO answers (task_id, subtask_id, answer, score) VALUES (?, ?, ?, ?)", taskID, subtaskID, answer.Answer, answer.Score); err != nil {
 				return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert answer: "+err.Error())
 			}
 		}
