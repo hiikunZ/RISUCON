@@ -734,7 +734,12 @@ func getSubmissionsHandler(c echo.Context) error {
 	}
 
 	submissions := []Submission{}
-	query := "SELECT * FROM submissions WHERE " + strings.Join(conditions, " AND ") + " ORDER BY submitted_at DESC"
+	query := ""
+	if len(conditions) > 0 {
+		query = "SELECT * FROM submissions WHERE " + strings.Join(conditions, " AND ") + " ORDER BY submitted_at DESC"
+	} else {
+		query = "SELECT * FROM submissions ORDER BY submitted_at DESC"
+	}
 	if err := tx.SelectContext(c.Request().Context(), &submissions, query, params...); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get submissions: "+err.Error())
 	}
