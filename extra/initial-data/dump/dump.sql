@@ -167,16 +167,16 @@ INSERT INTO `tasks` (`id`, `name`, `display_name`, `statement`, `submission_limi
 TRUNCATE TABLE `subtasks`;
 ALTER TABLE `subtasks` AUTO_INCREMENT = 1;
 INSERT INTO `subtasks` (`id`, `name`, `display_name`, `task_id`, `statement`) VALUES
-(1, 'A_1', '(1)', 1, '$$ 1+1=\mathord{?} $$'),
-(2, 'A_2', '(2)', 1, '$$ 1+2=\mathord{?} $$'),
-(3, 'A_3', '(3)', 1, '$$ 2+2=\mathord{?} $$'),
-(4, 'A_4', '(4)', 1, '$$ 2+3=\mathord{?} $$'),
-(5, 'A_5', '(5)', 1, '$$ 3+3=\mathord{?} $$'),
-(6, 'B_1', '(1)', 2, '$$ 2-1=\mathord{?} $$'),
-(7, 'B_2', '(2)', 2, '$$ 3-1=\mathord{?} $$'),
-(8, 'B_3', '(3)', 2, '$$ 5-2=\mathord{?} $$'),
-(9, 'B_4', '(4)', 2, '$$ 1-5=\mathord{?} $$'),
-(10, 'B_5', '(5)', 2, '$$ 2-7=\mathord{?} $$');
+(1, 'A_1', '(1)', 1, '$$ 1+1=\\mathord{?} $$'),
+(2, 'A_2', '(2)', 1, '$$ 1+2=\\mathord{?} $$'),
+(3, 'A_3', '(3)', 1, '$$ 2+2=\\mathord{?} $$'),
+(4, 'A_4', '(4)', 1, '$$ 2+3=\\mathord{?} $$'),
+(5, 'A_5', '(5)', 1, '$$ 3+3=\\mathord{?} $$'),
+(6, 'B_1', '(1)', 2, '$$ 2-1=\\mathord{?} $$'),
+(7, 'B_2', '(2)', 2, '$$ 3-1=\\mathord{?} $$'),
+(8, 'B_3', '(3)', 2, '$$ 5-2=\\mathord{?} $$'),
+(9, 'B_4', '(4)', 2, '$$ 1-5=\\mathord{?} $$'),
+(10, 'B_5', '(5)', 2, '$$ 2-7=\\mathord{?} $$');
 TRUNCATE TABLE `answers`;
 ALTER TABLE `answers` AUTO_INCREMENT = 1;
 INSERT INTO `answers` (`id`, `task_id`, `subtask_id`, `answer`, `score`) VALUES

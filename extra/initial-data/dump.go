@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 )
 
 const (
@@ -106,7 +107,7 @@ func DumpDatatoSQL(users []User, teams []Team, submissions []Submission, tasks [
 	fmt.Fprintf(file, "ALTER TABLE `tasks` AUTO_INCREMENT = 1;\n")
 	fmt.Fprintf(file, "INSERT INTO `tasks` (`id`, `name`, `display_name`, `statement`, `submission_limit`) VALUES\n")
 	for i, task := range tasks {
-		fmt.Fprintf(file, "(%d, '%s', '%s', '%s', %d)", task.ID, task.Name, task.DisplayName, task.Statement, task.SubmissionLimit)
+		fmt.Fprintf(file, "(%d, '%s', '%s', '%s', %d)", task.ID, task.Name, task.DisplayName, strings.Replace(task.Statement, "\\", "\\\\", -1), task.SubmissionLimit)
 		if i != len(tasks)-1 {
 			fmt.Fprintf(file, ",\n")
 		} else {
@@ -118,7 +119,7 @@ func DumpDatatoSQL(users []User, teams []Team, submissions []Submission, tasks [
 	fmt.Fprintf(file, "INSERT INTO `subtasks` (`id`, `name`, `display_name`, `task_id`, `statement`) VALUES\n")
 	for i, task := range tasks {
 		for j, subtask := range task.SubTasks {
-			fmt.Fprintf(file, "(%d, '%s', '%s', %d, '%s')", subtask.ID, subtask.Name, subtask.DisplayName, subtask.TaskID, subtask.Statement)
+			fmt.Fprintf(file, "(%d, '%s', '%s', %d, '%s')", subtask.ID, subtask.Name, subtask.DisplayName, subtask.TaskID, strings.Replace(subtask.Statement, "\\", "\\\\", -1))
 			if i != len(tasks)-1 || j != len(task.SubTasks)-1 {
 				fmt.Fprintf(file, ",\n")
 			} else {
