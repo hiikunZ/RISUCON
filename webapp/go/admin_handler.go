@@ -61,9 +61,14 @@ func createTaskHandler(c echo.Context) error {
 	} else if err != sql.ErrNoRows {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get task: "+err.Error())
 	}
-	var taskID int
-	if err := tx.GetContext(ctx, &taskID, "INSERT INTO tasks (name, display_name, statement, submission_limit) VALUES (?, ?, ?, ?) RETURNING id", req.Name, req.DisplayName, req.Statement, req.SubmissionLimit); err != nil {
+	
+	if _, err := tx.ExecContext(ctx, "INSERT INTO tasks (name, display_name, statement, submission_limit) VALUES (?, ?, ?, ?)", req.Name, req.DisplayName, req.Statement, req.SubmissionLimit); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert task: "+err.Error())
+	}
+	var taskID int
+	err = tx.GetContext(ctx, &taskID, "SELECT id FROM tasks WHERE name = ?", req.Name)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get taskID: "+err.Error())
 	}
 
 	for _, subtask := range req.Subtasks {
@@ -74,9 +79,13 @@ func createTaskHandler(c echo.Context) error {
 		} else if err != sql.ErrNoRows {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get subtask: "+err.Error())
 		}
-		var subtaskID int
-		if err := tx.GetContext(ctx, &subtaskID, "INSERT INTO subtasks (name, display_name, task_id, statement) VALUES (?, ?, ?, ?) RETURNING id", subtask.Name, subtask.DisplayName, taskID, subtask.Statement); err != nil {
+		if _, err := tx.ExecContext(ctx, "INSERT INTO subtasks (name, display_name, task_id, statement) VALUES (?, ?, ?, ?)", subtask.Name, subtask.DisplayName, taskID, subtask.Statement); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert subtask: "+err.Error())
+		}
+		var subtaskID int
+		err = tx.GetContext(ctx, &subtaskID, "SELECT id FROM subtasks WHERE task_id = ? AND name = ?", taskID, subtask.Name)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get subtaskID: "+err.Error())
 		}
 		for _, answer := range subtask.Answers {
 			if _, err := tx.ExecContext(ctx, "INSERT INTO answers (task_id, subtask_id, answer, score) VALUES (?, ?, ?)", taskID, subtaskID, answer.Answer, answer.Score); err != nil {
