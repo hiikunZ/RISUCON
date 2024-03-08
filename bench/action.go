@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	jsfilename = "index-1k7j8vOj.js"
+	jsfilename = "index-dTq6JdyY.js"
 	cssfilename = "index-npEbj7xQ.css"
 )
 // POST /api/initialize にリクエストを送る
