@@ -89,5 +89,5 @@ func createTaskHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit transaction: "+err.Error())
 	}
 
-	return c.NoContent(http.StatusOK)
+	return c.NoContent(http.StatusCreated)
 }
