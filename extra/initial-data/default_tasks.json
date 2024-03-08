@@ -3,7 +3,7 @@
         "id": 1,
         "name": "A",
         "display_name": "足し算",
-        "description": "足し算をしてください。",
+        "statement": "足し算をしてください。",
         "submission_limit": 10,
         "subtasks": [
             {
@@ -97,7 +97,7 @@
         "id": 2,
         "name": "B",
         "display_name": "引き算",
-        "description": "引き算をしてください。符号が間違っていた場合は、部分点として配点の 50 % の得点が与えられます。",
+        "statement": "引き算をしてください。符号が間違っていた場合は、部分点として配点の 50 % の得点が与えられます。",
         "submission_limit": 10,
         "subtasks": [
             {

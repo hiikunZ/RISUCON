@@ -162,8 +162,8 @@ INSERT INTO `teams` (`id`, `name`, `display_name`, `leader_id`, `member1_id`, `m
 TRUNCATE TABLE `tasks`;
 ALTER TABLE `tasks` AUTO_INCREMENT = 1;
 INSERT INTO `tasks` (`id`, `name`, `display_name`, `statement`, `submission_limit`) VALUES
-(1, 'A', '足し算', '', 10),
-(2, 'B', '引き算', '', 10);
+(1, 'A', '足し算', '足し算をしてください。', 10),
+(2, 'B', '引き算', '引き算をしてください。符号が間違っていた場合は、部分点として配点の 50 % の得点が与えられます。', 10);
 TRUNCATE TABLE `subtasks`;
 ALTER TABLE `subtasks` AUTO_INCREMENT = 1;
 INSERT INTO `subtasks` (`id`, `name`, `display_name`, `task_id`, `statement`) VALUES
