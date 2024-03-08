@@ -21,7 +21,8 @@ import (
 )
 
 const (
-	listenPort = 8080
+	listenPort           = 8080
+	frontendContentsPath = "../public"
 )
 
 var (
@@ -105,6 +106,13 @@ func main() {
 	// for admin
 	e.POST("/api/admin/createtask", createTaskHandler)
 
+	// 静的ファイル
+	e.Static("/assets", frontendContentsPath+"/assets")
+
+	// 以上に当てはまらなければ index.html を返す
+	e.GET("/*", getIndexHandler)
+	
+
 	// DB接続
 	db, err := connectDB()
 	if err != nil {
@@ -126,4 +134,8 @@ func main() {
 		e.Logger.Errorf("failed to start server: %v", err)
 		os.Exit(1)
 	}
+}
+
+func getIndexHandler(c echo.Context) error {
+	return c.File(frontendContentsPath + "/index.html")
 }
