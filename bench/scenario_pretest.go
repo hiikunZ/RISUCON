@@ -8,6 +8,91 @@ import (
 	"github.com/isucon/isucandar/failure"
 )
 
+func (s *Scenario) getindexValidateScenario(ctx context.Context, step *isucandar.BenchmarkStep) error {
+	report := TimeReporter("index 整合性チェック", s.Option)
+	defer report()
+
+	agent, err := s.GetAgent(step)
+
+	if err != nil {
+		return err
+	}
+	indexRes, err := GetIndexAction(ctx, agent)
+	if err != nil {
+		return failure.NewError(ValidationErrInvalidRequest, err)
+	}
+	defer indexRes.Body.Close()
+
+	indexValidation := ValidateResponse(
+		indexRes,
+		ValidateStaticFile(indexhash),
+	)
+	indexValidation.Add(step)
+
+	if indexValidation.IsEmpty() {
+		return nil
+	} else {
+		return indexValidation
+	}
+}
+
+func (s *Scenario) getjsValidateScenario(ctx context.Context, step *isucandar.BenchmarkStep) error {
+	report := TimeReporter("js 整合性チェック", s.Option)
+	defer report()
+
+	agent, err := s.GetAgent(step)
+
+	if err != nil {
+		return err
+	}
+	jsRes, err := GetJSAction(ctx, agent)
+	if err != nil {
+		return failure.NewError(ValidationErrInvalidRequest, err)
+	}
+	defer jsRes.Body.Close()
+
+	jsValidation := ValidateResponse(
+		jsRes,
+		ValidateStaticFile(jsfilehash),
+	)
+	jsValidation.Add(step)
+
+	if jsValidation.IsEmpty() {
+		return nil
+	} else {
+		return jsValidation
+	}
+}
+
+func (s *Scenario) getcssValidateScenario(ctx context.Context, step *isucandar.BenchmarkStep) error {
+	report := TimeReporter("css 整合性チェック", s.Option)
+	defer report()
+
+	agent, err := s.GetAgent(step)
+
+	if err != nil {
+		return err
+	}
+	cssRes, err := GetCSSAction(ctx, agent)
+	if err != nil {
+		return failure.NewError(ValidationErrInvalidRequest, err)
+	}
+	defer cssRes.Body.Close()
+
+	cssValidation := ValidateResponse(
+		cssRes,
+		ValidateStaticFile(cssfilehash),
+	)
+	cssValidation.Add(step)
+
+	if cssValidation.IsEmpty() {
+		return nil
+	} else {
+		return cssValidation
+	}
+}
+
+
 func (s *Scenario) loginValidateSuccessScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User) error {
 	report := TimeReporter("ログイン成功 整合性チェック", s.Option)
 	defer report()
@@ -136,7 +221,15 @@ func (sc *Scenario) PretestScenario(ctx context.Context, step *isucandar.Benchma
 	defer ContestantLogger.Printf("[PretestScenario] 整合性チェックを終了します")
 
 	// 静的ファイルの確認
-	
+	if err := sc.getindexValidateScenario(ctx, step); err != nil {
+		return err
+	}
+	if err := sc.getjsValidateScenario(ctx, step); err != nil {
+		return err
+	}
+	if err := sc.getcssValidateScenario(ctx, step); err != nil {
+		return err
+	}
 
 	checkuserIDs := []int{2, 4, 10}
 	for cnt := 0; cnt < 4; cnt++ {
