@@ -520,9 +520,9 @@ type SubmitRequest struct {
 type SubmitResponse struct {
 	IsScored             bool   `json:"is_scored"`
 	Score                int    `json:"score"`
-	SubtaskName          string `json:"subtask_name"`
-	SubTaskDisplayName   string `json:"subtask_display_name"`
-	SubTaskMaxScore      int    `json:"subtask_max_score"`
+	SubtaskName          string `json:"subtask_name,omitempty"`
+	SubTaskDisplayName   string `json:"subtask_display_name,omitempty"`
+	SubTaskMaxScore      int    `json:"subtask_max_score,omitempty"`
 	RemainingSubmissions int    `json:"remaining_submissions"`
 }
 
@@ -608,8 +608,6 @@ func submitHandler(c echo.Context) error {
 	if err == sql.ErrNoRows {
 		res.IsScored = false
 		res.Score = 0
-		res.SubtaskName = ""
-		res.SubTaskDisplayName = ""
 		res.RemainingSubmissions = task.SubmissionLimit - submissionscount - 1
 	} else if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get answer: "+err.Error())
