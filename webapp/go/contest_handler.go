@@ -603,27 +603,35 @@ func submitHandler(c echo.Context) error {
 
 	res := SubmitResponse{}
 
-	answer := Answer{}
-	err = tx.GetContext(c.Request().Context(), &answer, "SELECT * FROM answers WHERE task_id = ? AND answer = ?", task.ID, req.Answer)
-	if err == sql.ErrNoRows {
-		res.IsScored = false
-		res.Score = 0
-		res.RemainingSubmissions = task.SubmissionLimit - submissionscount - 1
-	} else if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get answer: "+err.Error())
-	} else {
-		res.IsScored = true
-		res.Score = answer.Score
-		subtask := Subtask{}
-		if err := tx.GetContext(c.Request().Context(), &subtask, "SELECT * FROM subtasks WHERE id = ?", answer.SubtaskID); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get subtask: "+err.Error())
+	// デフォルトではこれを返す。答えが有効な場合は更新される。
+	res.IsScored = false
+	res.Score = 0
+	res.RemainingSubmissions = task.SubmissionLimit - submissionscount - 1
+
+	subtasks := []Subtask{}
+	if err := tx.SelectContext(c.Request().Context(), &subtasks, "SELECT * FROM subtasks WHERE task_id = ?", task.ID); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get subtasks: "+err.Error())
+	}
+	for _, subtask := range subtasks {
+		answers := []Answer{}
+		if err := tx.SelectContext(c.Request().Context(), &answers, "SELECT * FROM answers WHERE subtask_id = ?", subtask.ID); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get answers: "+err.Error())
 		}
-		if err := tx.GetContext(c.Request().Context(), &res.SubTaskMaxScore, "SELECT MAX(score) FROM answers WHERE subtask_id = ?", subtask.ID); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get subtask max score: "+err.Error())
+		// SubTaskMaxScore は事前に計算しておく
+		subtaskmaxscore := 0
+		for _, answer := range answers {
+			subtaskmaxscore = max(subtaskmaxscore, answer.Score)
 		}
-		res.SubtaskName = subtask.Name
-		res.SubTaskDisplayName = subtask.DisplayName
-		res.RemainingSubmissions = task.SubmissionLimit - submissionscount - 1
+		// 答えが有効な場合、スコアを更新する
+		for _, answer := range answers {
+			if answer.Answer == req.Answer {
+				res.IsScored = true
+				res.Score = answer.Score
+				res.SubtaskName = subtask.Name
+				res.SubTaskDisplayName = subtask.DisplayName
+				res.SubTaskMaxScore = subtaskmaxscore
+			}
+		}
 	}
 
 	if err := tx.Commit(); err != nil {
