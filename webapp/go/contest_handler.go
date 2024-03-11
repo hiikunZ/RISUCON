@@ -620,7 +620,9 @@ func submitHandler(c echo.Context) error {
 		// SubTaskMaxScore は事前に計算しておく
 		subtaskmaxscore := 0
 		for _, answer := range answers {
-			subtaskmaxscore = max(subtaskmaxscore, answer.Score)
+			if subtaskmaxscore < answer.Score {
+				subtaskmaxscore = answer.Score
+			}
 		}
 		// 答えが有効な場合、スコアを更新する
 		for _, answer := range answers {
