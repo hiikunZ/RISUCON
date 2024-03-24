@@ -7,11 +7,18 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
+)
+
+var (
+	// Subtask は update がないのでキャッシュしておく
+	// メモ: initializeHandler でキャッシュを消すのを忘れずに
+	subtaskcache = sync.Map{}
 )
 
 type Task struct {
@@ -410,9 +417,18 @@ func getTaskHandler(c echo.Context) error {
 	}
 
 	subtasks := []Subtask{}
+
+	if cache_data, ok := subtaskcache.Load(task.ID) ; ok {
+		// データがキャッシュされているので、それを読み込む
+		subtasks = cache_data.([]Subtask)
+	}
+
 	if err := tx.SelectContext(c.Request().Context(), &subtasks, "SELECT * FROM subtasks WHERE task_id = ?", task.ID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get subtasks: "+err.Error())
 	}
+
+	// キャッシュにデータを保存
+	subtaskcache.Store(task.ID, subtasks)
 
 	res := TaskDetail{
 		Name:            task.Name,
