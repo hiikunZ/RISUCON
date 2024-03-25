@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
@@ -118,14 +119,14 @@ type Team struct {
 }
 
 type ScoreData struct {
-	ID            int    `db:"id" json:"-"`
-	TeamID        int    `db:"team_id" json:"-"`
-	TeamName      string `db:"team_name" json:"team_name"`
-	IsPassed      bool   `db:"is_passed" json:"is_passed"`
-	Score         int    `db:"score" json:"score"`
-	Timestamp     string `db:"timestamp" json:"timestamp"`
-	ContestantLog string `db:"contestant_log" json:"contestant_log"`
-	AdminLog      string `db:"admin_log" json:"-"`
+	ID            int       `db:"id" json:"-"`
+	TeamID        int       `db:"team_id" json:"-"`
+	TeamName      string    `db:"team_name" json:"team_name"`
+	IsPassed      bool      `db:"is_passed" json:"is_passed"`
+	Score         int       `db:"score" json:"score"`
+	Timestamp     time.Time `db:"timestamp" json:"timestamp"`
+	ContestantLog string    `db:"contestant_log" json:"contestant_log"`
+	AdminLog      string    `db:"admin_log" json:"-"`
 }
 
 type LoginRequest struct {
@@ -327,9 +328,9 @@ func isBenchmarkingHandler(c echo.Context) error {
 }
 
 type ScoreboardData struct {
-	TeamName  string `db:"team_name" json:"team_name"`
-	Score     int    `db:"score" json:"score"`
-	Timestamp string `db:"timestamp" json:"timestamp"`
+	TeamName  string    `db:"team_name" json:"team_name"`
+	Score     int       `db:"score" json:"score"`
+	Timestamp time.Time `db:"timestamp" json:"timestamp"`
 }
 
 func scoreboardHandler(c echo.Context) error {
@@ -343,7 +344,7 @@ func scoreboardHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get score data: "+err.Error())
 	}
 
-    res := []ScoreboardData{}
+	res := []ScoreboardData{}
 	for _, score := range scores {
 		res = append(res, ScoreboardData{
 			TeamName:  score.TeamName,
