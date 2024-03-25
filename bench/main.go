@@ -107,9 +107,10 @@ func main() {
 	}
 
 	ContestantLogger.Printf("[PASSED]: %v", passed)
-	ContestantLogger.Printf("[SCORE] %d (addition: %d, deduction: %d)", score.total, score.addition, score.deduction)
+	ContestantLogger.Printf("[SCORE]: %d (addition: %d, deduction: %d)", score.total, score.addition, score.deduction)
 	AdminLogger.Printf("[SCORE] %v", score.breakdown)
 
+	AdminLogger.Printf("[PASSED]: %v,[SCORE]: %d", passed, score.total)
 }
 
 func sumScore(result *isucandar.BenchmarkResult, errorSummary *errorSummary) *scoreSummary {
