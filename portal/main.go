@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS score_data(
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     team_id INTEGER NOT NULL,
 	team_name TEXT,
+    team_display_name TEXT,
 	is_passed BOOLEAN,
     score INTEGER,
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -119,14 +120,15 @@ type Team struct {
 }
 
 type ScoreData struct {
-	ID            int       `db:"id" json:"-"`
-	TeamID        int       `db:"team_id" json:"-"`
-	TeamName      string    `db:"team_name" json:"team_name"`
-	IsPassed      bool      `db:"is_passed" json:"is_passed"`
-	Score         int       `db:"score" json:"score"`
-	Timestamp     time.Time `db:"timestamp" json:"timestamp"`
-	ContestantLog string    `db:"contestant_log" json:"contestant_log"`
-	AdminLog      string    `db:"admin_log" json:"-"`
+	ID              int       `db:"id" json:"-"`
+	TeamID          int       `db:"team_id" json:"-"`
+	TeamName        string    `db:"team_name" json:"team_name"`
+	TeamDisplayName string    `db:"team_display_name" json:"team_display_name"`
+	IsPassed        bool      `db:"is_passed" json:"is_passed"`
+	Score           int       `db:"score" json:"score"`
+	Timestamp       time.Time `db:"timestamp" json:"timestamp"`
+	ContestantLog   string    `db:"contestant_log" json:"contestant_log"`
+	AdminLog        string    `db:"admin_log" json:"-"`
 }
 
 type LoginRequest struct {
@@ -266,7 +268,7 @@ func benchmarkHandler(c echo.Context) error {
 			// [ADMIN] xx:xx:xx [PASSED]: %v,[SCORE]: %d
 			fmt.Fscan(bytes.NewReader(lastline), "[ADMIN] %*s [PASSED]: %t,[SCORE]: %d", &passed, &score)
 
-			_, err = tx.Exec("INSERT INTO score_data(team_id, team_name, is_passed, score, contestant_log, admin_log) VALUES(?, ?, ?, ?, ?, ?)", t.ID, t.Name, passed, score, contestantlog, adminlog)
+			_, err = tx.Exec("INSERT INTO score_data(team_id, team_name, team_display_name, is_passed, score, contestant_log, admin_log) VALUES(?, ?, ?, ?, ?, ?, ?)", t.ID, t.Name, t.DisplayName, passed, score, contestantlog, adminlog)
 			if err != nil {
 				log.Printf("failed to insert score data: %v", err)
 			}
@@ -328,9 +330,10 @@ func isBenchmarkingHandler(c echo.Context) error {
 }
 
 type ScoreboardData struct {
-	TeamName  string    `db:"team_name" json:"team_name"`
-	Score     int       `db:"score" json:"score"`
-	Timestamp time.Time `db:"timestamp" json:"timestamp"`
+	TeamName        string    `db:"team_name" json:"team_name"`
+	TeamDisplayName string    `db:"team_display_name" json:"team_display_name"`
+	Score           int       `db:"score" json:"score"`
+	Timestamp       time.Time `db:"timestamp" json:"timestamp"`
 }
 
 func scoreboardHandler(c echo.Context) error {
@@ -347,9 +350,10 @@ func scoreboardHandler(c echo.Context) error {
 	res := []ScoreboardData{}
 	for _, score := range scores {
 		res = append(res, ScoreboardData{
-			TeamName:  score.TeamName,
-			Score:     score.Score,
-			Timestamp: score.Timestamp,
+			TeamName:        score.TeamName,
+			TeamDisplayName: score.TeamDisplayName,
+			Score:           score.Score,
+			Timestamp:       score.Timestamp,
 		})
 	}
 
