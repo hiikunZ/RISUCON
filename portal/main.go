@@ -20,6 +20,8 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	echolog "github.com/labstack/gommon/log"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 const (
@@ -245,7 +247,7 @@ func benchmarkHandler(c echo.Context) error {
 		cmd.Stderr = &stderr
 
 		err := cmd.Run()
-		
+
 		tx := db.MustBegin()
 		defer tx.Rollback()
 
@@ -284,8 +286,7 @@ func benchmarkHandler(c echo.Context) error {
 	return nil
 }
 
-
-func historyHandler (c echo.Context) error {
+func historyHandler(c echo.Context) error {
 	if err := verifyUserSession(c); err != nil {
 		return err
 	}
@@ -325,13 +326,11 @@ func isBenchmarkingHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, t.IsBenchmarking)
 }
 
-
 type ScoreboardData struct {
-	TeamName      string `db:"team_name" json:"team_name"`
-	Score         int    `db:"score" json:"score"`
-	Timestamp     string `db:"timestamp" json:"timestamp"`
+	TeamName  string `db:"team_name" json:"team_name"`
+	Score     int    `db:"score" json:"score"`
+	Timestamp string `db:"timestamp" json:"timestamp"`
 }
-
 
 func scoreboardHandler(c echo.Context) error {
 	if err := verifyUserSession(c); err != nil {
@@ -344,11 +343,11 @@ func scoreboardHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get score data: "+err.Error())
 	}
 
-	var res []ScoreboardData 
+	var res []ScoreboardData
 	for _, score := range scores {
 		res = append(res, ScoreboardData{
-			TeamName: score.TeamName,
-			Score: score.Score,
+			TeamName:  score.TeamName,
+			Score:     score.Score,
 			Timestamp: score.Timestamp,
 		})
 	}
