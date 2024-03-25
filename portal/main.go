@@ -109,23 +109,23 @@ func getIndexHandler(c echo.Context) error {
 }
 
 type Team struct {
-	ID             int    `db:"id" json:"id"`
+	ID             int    `db:"id" json:"-"`
 	Name           string `db:"name" json:"name"`
 	DisplayName    string `db:"display_name" json:"display_name"`
-	Passhash       string `db:"passhash"`
-	ServerIP       string `db:"server_ip"`
-	IsBenchmarking bool   `db:"is_benchmarking"`
+	Passhash       string `db:"passhash" json:"-"`
+	ServerIP       string `db:"server_ip" json:"-"`
+	IsBenchmarking bool   `db:"is_benchmarking" json:"-"`
 }
 
 type ScoreData struct {
-	ID            int    `db:"id"`
-	TeamID        int    `db:"team_id"`
+	ID            int    `db:"id" json:"-"`
+	TeamID        int    `db:"team_id" json:"-"`
 	TeamName      string `db:"team_name" json:"team_name"`
 	IsPassed      bool   `db:"is_passed" json:"is_passed"`
 	Score         int    `db:"score" json:"score"`
 	Timestamp     string `db:"timestamp" json:"timestamp"`
 	ContestantLog string `db:"contestant_log" json:"contestant_log"`
-	AdminLog      string `db:"admin_log"`
+	AdminLog      string `db:"admin_log" json:"-"`
 }
 
 type LoginRequest struct {
