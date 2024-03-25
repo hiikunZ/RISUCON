@@ -302,7 +302,7 @@ func historyHandler(c echo.Context) error {
 	}
 
 	scores := []ScoreData{}
-	err = db.Select(&scores, "SELECT * FROM score_data WHERE team_id = ?", t.ID)
+	err = db.Select(&scores, "SELECT * FROM score_data WHERE team_id = ? ORDER BY timestamp DESC", t.ID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get score data: "+err.Error())
 	}
