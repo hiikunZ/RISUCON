@@ -343,7 +343,7 @@ func scoreboardHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get score data: "+err.Error())
 	}
 
-	var res []ScoreboardData
+    res := []ScoreboardData{}
 	for _, score := range scores {
 		res = append(res, ScoreboardData{
 			TeamName:  score.TeamName,
