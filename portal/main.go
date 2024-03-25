@@ -265,7 +265,7 @@ func benchmarkHandler(c echo.Context) error {
 			// [ADMIN] xx:xx:xx [PASSED]: %v,[SCORE]: %d
 			fmt.Fscan(bytes.NewReader(lastline), "[ADMIN] %*s [PASSED]: %t,[SCORE]: %d", &passed, &score)
 
-			_, err = tx.Exec("INSERT INTO score_data(team_id, is_passed, score, contestant_log, admin_log) VALUES(?, ?, ?, ?, ?)", t.ID, passed, score, contestantlog, adminlog)
+			_, err = tx.Exec("INSERT INTO score_data(team_id, team_name, is_passed, score, contestant_log, admin_log) VALUES(?, ?, ?, ?, ?)", t.ID, t.Name, passed, score, contestantlog, adminlog)
 			if err != nil {
 				log.Printf("failed to insert score data: %v", err)
 			}
