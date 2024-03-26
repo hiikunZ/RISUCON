@@ -210,6 +210,117 @@ func (s *Scenario) getteamValidateScenario(ctx context.Context, step *isucandar.
 	}
 }
 
+func (s *Scenario) postsubmitValidateScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User) error {
+	report := TimeReporter("submit 取得 整合性チェック", s.Option)
+	defer report()
+
+	agent, err := s.GetAgentFromUser(step, user)
+
+	if err != nil {
+		return err
+	}
+	postsubmitRes, err := PostSubmitAction(ctx, agent)
+	if err != nil {
+		return failure.NewError(ValidationErrInvalidRequest, err)
+	}
+	defer postsubmitRes.Body.Close()
+
+	getsubmitValidation := ValidateResponse(
+		postsubmitRes,
+		validateSubmit(postsubmitRes, user),
+	)
+	getsubmitValidation.Add(step)
+
+	if getsubmitValidation.IsEmpty() {
+		return nil
+	} else {
+		return getsubmitValidation
+	}
+}
+
+func (s *Scenario) getSubmissionsValidateScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User) error {
+	report := TimeReporter("submissions 取得 整合性チェック", s.Option)
+	defer report()
+
+	agent, err := s.GetAgentFromUser(step, user)
+
+	if err != nil {
+		return err
+	}
+	getsubmissionsRes, err := GetSubmissionsAction(ctx, agent)
+	if err != nil {
+		return failure.NewError(ValidationErrInvalidRequest, err)
+	}
+	defer getsubmissionsRes.Body.Close()
+
+	getsubmissionsValidation := ValidateResponse(
+		getsubmissionsRes,
+		validategetSubmissions(getsubmissionsRes, user),
+	)
+	getsubmissionsValidation.Add(step)
+
+	if getsubmissionsValidation.IsEmpty() {
+		return nil
+	} else {
+		return getsubmissionsValidation
+	}
+}
+
+func (s *Scenario) getSubmissionSearchValidateScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User) error {
+	report := TimeReporter("submission 検索 整合性チェック", s.Option)
+	defer report()
+
+	agent, err := s.GetAgentFromUser(step, user)
+
+	if err != nil {
+		return err
+	}
+	getsubmissionsearchRes, err := GetSubmissionSearchAction(ctx, agent)
+	if err != nil {
+		return failure.NewError(ValidationErrInvalidRequest, err)
+	}
+	defer getsubmissionsearchRes.Body.Close()
+
+	getsubmissionsearchValidation := ValidateResponse(
+		getsubmissionsearchRes,
+		validategetSubmissionSearch(getsubmissionsearchRes, user),
+	)
+	getsubmissionsearchValidation.Add(step)
+
+	if getsubmissionsearchValidation.IsEmpty() {
+		return nil
+	} else {
+		return getsubmissionsearchValidation
+	}
+}
+
+func (s *Scenario) getlogoutValidateScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User) error {
+	report := TimeReporter("ログアウト 整合性チェック", s.Option)
+	defer report()
+
+	agent, err := s.GetAgentFromUser(step, user)
+
+	if err != nil {
+		return err
+	}
+	logoutRes, err := GetLogoutAction(ctx, agent)
+	if err != nil {
+		return failure.NewError(ValidationErrInvalidRequest, err)
+	}
+	defer logoutRes.Body.Close()
+
+	logoutValidation := ValidateResponse(
+		logoutRes,
+		validateLogout(logoutRes),
+	)
+	logoutValidation.Add(step)
+
+	if logoutValidation.IsEmpty() {
+		return nil
+	} else {
+		return logoutValidation
+	}
+}
 // ベンチ実行前の整合性検証シナリオ
 // isucandar.ValidateScenarioを満たすメソッド
 // isucandar.Benchmark の PrePare ステップで実行される
@@ -264,9 +375,21 @@ func (sc *Scenario) PretestScenario(ctx context.Context, step *isucandar.Benchma
 			return err
 		}
 		// submit
+		if err := sc.postsubmitValidateScenario(ctx, step, user); err != nil {
+			return err
+		}
 		// submission
+		if err := sc.getSubmissionsValidateScenario(ctx, step, user); err != nil {
+			return err
+		}
 		// submission 検索
+		if err := sc.getSubmissionSearchValidateScenario(ctx, step, user); err != nil {
+			return err
+		}
 		// logout
+		if err := sc.getlogoutValidateScenario(ctx, step, user); err != nil {
+			return err
+		}
 		sc.ConsumedUserIDs.Remove(int64(user.ID))
 	}
 	// 情報がこわれてないか
