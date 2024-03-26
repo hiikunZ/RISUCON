@@ -142,6 +142,7 @@ func (s *Scenario) loadAdjustor(ctx context.Context, step *isucandar.BenchmarkSt
 			ContestantLogger.Print("処理成功数に応じて負荷が上がります")
 			loginParallels = int32(userRegistrationCount / 15)
 			userRegistrationParallels = int32(visitorCount / 5)
+			s.AddTask = true
 		}
 
 		if loginParallels > 0 {

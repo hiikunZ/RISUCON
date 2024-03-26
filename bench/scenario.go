@@ -37,6 +37,8 @@ type Scenario struct {
 	VisitorMu    sync.Mutex
 	VisitorCount int
 
+	AddTask bool
+
 	NowClock time.Time
 }
 

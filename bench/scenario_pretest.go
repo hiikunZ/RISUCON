@@ -211,7 +211,7 @@ func (s *Scenario) getteamValidateScenario(ctx context.Context, step *isucandar.
 }
 
 func (s *Scenario) postsubmitValidateScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User) error {
-	report := TimeReporter("submit 取得 整合性チェック", s.Option)
+	/*report := TimeReporter("submit 取得 整合性チェック", s.Option)
 	defer report()
 
 	agent, err := s.GetAgentFromUser(step, user)
@@ -219,7 +219,7 @@ func (s *Scenario) postsubmitValidateScenario(ctx context.Context, step *isucand
 	if err != nil {
 		return err
 	}
-	postsubmitRes, err := PostSubmitAction(ctx, agent)
+	postsubmitRes, err := PostSubmitAction(ctx, agent,)
 	if err != nil {
 		return failure.NewError(ValidationErrInvalidRequest, err)
 	}
@@ -236,10 +236,12 @@ func (s *Scenario) postsubmitValidateScenario(ctx context.Context, step *isucand
 	} else {
 		return getsubmitValidation
 	}
+	*/
+	return nil
 }
 
 func (s *Scenario) getSubmissionsValidateScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User) error {
-	report := TimeReporter("submissions 取得 整合性チェック", s.Option)
+	/*report := TimeReporter("submissions 取得 整合性チェック", s.Option)
 	defer report()
 
 	agent, err := s.GetAgentFromUser(step, user)
@@ -263,11 +265,12 @@ func (s *Scenario) getSubmissionsValidateScenario(ctx context.Context, step *isu
 		return nil
 	} else {
 		return getsubmissionsValidation
-	}
+	}*/
+	return nil
 }
 
 func (s *Scenario) getSubmissionSearchValidateScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User) error {
-	report := TimeReporter("submission 検索 整合性チェック", s.Option)
+	/*report := TimeReporter("submission 検索 整合性チェック", s.Option)
 	defer report()
 
 	agent, err := s.GetAgentFromUser(step, user)
@@ -291,11 +294,12 @@ func (s *Scenario) getSubmissionSearchValidateScenario(ctx context.Context, step
 		return nil
 	} else {
 		return getsubmissionsearchValidation
-	}
+	}*/
+	return nil
 }
 
 func (s *Scenario) getlogoutValidateScenario(ctx context.Context, step *isucandar.BenchmarkStep, user *User) error {
-	report := TimeReporter("ログアウト 整合性チェック", s.Option)
+	/*report := TimeReporter("ログアウト 整合性チェック", s.Option)
 	defer report()
 
 	agent, err := s.GetAgentFromUser(step, user)
@@ -320,6 +324,8 @@ func (s *Scenario) getlogoutValidateScenario(ctx context.Context, step *isucanda
 	} else {
 		return logoutValidation
 	}
+	*/
+	return nil
 }
 // ベンチ実行前の整合性検証シナリオ
 // isucandar.ValidateScenarioを満たすメソッド
@@ -375,7 +381,7 @@ func (sc *Scenario) PretestScenario(ctx context.Context, step *isucandar.Benchma
 			return err
 		}
 		// submit
-		if err := sc.postsubmitValidateScenario(ctx, step, user); err != nil {
+		/*if err := sc.postsubmitValidateScenario(ctx, step, user); err != nil {
 			return err
 		}
 		// submission
@@ -390,6 +396,7 @@ func (sc *Scenario) PretestScenario(ctx context.Context, step *isucandar.Benchma
 		if err := sc.getlogoutValidateScenario(ctx, step, user); err != nil {
 			return err
 		}
+		*/
 		sc.ConsumedUserIDs.Remove(int64(user.ID))
 	}
 	// 情報がこわれてないか

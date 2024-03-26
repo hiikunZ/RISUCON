@@ -60,7 +60,7 @@ func (s *Scenario) NewUserRegistrationScenarioWorker(step *isucandar.BenchmarkSt
 		}
 		// createteam
 		team := Teamgen()
-		team.SubmissionCounts = make([]int, s.Tasks.Len())
+		team.SubmissionCounts = make([]int, s.Prepared_Tasks.Len())
 		if ok := s.CreateTeamSuccessScenario(ctx, step, &leader, &team); !ok {
 			return
 		}
