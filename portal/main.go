@@ -263,10 +263,11 @@ func benchmarkHandler(c echo.Context) error {
 			adminloglines := bytes.Split([]byte(adminlog), []byte("\n"))
 			lastline := adminloglines[len(adminloglines)-2]
 
+			t := ""
 			passed := false
 			score := 0
 			// [ADMIN] xx:xx:xx [PASSED]: %v,[SCORE]: %d
-			fmt.Fscan(bytes.NewReader(lastline), "[ADMIN] %*s [PASSED]: %t,[SCORE]: %d", &passed, &score)
+			fmt.Fscanf(bytes.NewReader(lastline), "[ADMIN] %s [PASSED]: %t,[SCORE]: %d", &t, &passed, &score)
 
 			_, err = tx.Exec("INSERT INTO score_data(team_id, team_name, team_display_name, is_passed, score, contestant_log, admin_log) VALUES(?, ?, ?, ?, ?, ?, ?)", t.ID, t.Name, t.DisplayName, passed, score, contestantlog, adminlog)
 			if err != nil {
