@@ -208,8 +208,13 @@ func handleErrors(summary *errorSummary, prepareOnly bool, targethost string) bo
 			errcode := nerr.Error()
 			method := strings.ToUpper(strings.Split(errcode, " ")[0])
 			AdminLogger.Print(errcode)
-			path := strings.Split(strings.Split(errcode, targethost)[1], "\"")[0]
-			ContestantLogger.Printf("ERROR[%d] %s %s : タイムアウトが発生しました", i+1, method, path)
+			p := strings.Split(errcode, targethost)
+			if len(p) >= 2 {
+				path := strings.Split(p[1], "\"")[0]
+				ContestantLogger.Printf("ERROR[%d] %s %s : タイムアウトが発生しました", i+1, method, path)
+			} else {
+				ContestantLogger.Printf("ERROR[%d] タイムアウトが発生しました", i+1)
+			}
 
 		} else if failure.IsCode(err, ErrInvalidStatusCode) {
 			message := strings.Split(fmt.Sprintf("%v", err), "scenario-error-status-code: ")[1]
